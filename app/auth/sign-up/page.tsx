@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 export default function SignUpPage() {
+  const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
@@ -31,6 +32,12 @@ export default function SignUpPage() {
       return
     }
 
+    if (username.length < 3) {
+      setError("Username must be at least 3 characters")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -38,13 +45,13 @@ export default function SignUpPage() {
         options: {
           emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || window.location.origin,
           data: {
+            username,
             email_confirm: false,
           },
         },
       })
       if (error) throw error
 
-      // Redirect to main app immediately
       router.push("/")
       router.refresh()
     } catch (error: unknown) {
@@ -66,6 +73,18 @@ export default function SignUpPage() {
             <CardContent>
               <form onSubmit={handleSignUp}>
                 <div className="flex flex-col gap-6">
+                  <div className="grid gap-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="pushupmaster"
+                      required
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      minLength={3}
+                    />
+                  </div>
                   <div className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
