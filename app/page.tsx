@@ -13,6 +13,8 @@ export default async function Home() {
     redirect("/auth/login")
   }
 
+  const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).single()
+
   const { data: workouts, error } = await supabase
     .from("workouts")
     .select("*")
@@ -26,5 +28,11 @@ export default async function Home() {
 
   const totalPushups = workouts?.reduce((sum, workout) => sum + workout.pushups, 0) || 0
 
-  return <PushupTracker initialWorkouts={workouts || []} initialTotal={totalPushups} userEmail={user.email || ""} />
+  return (
+    <PushupTracker
+      initialWorkouts={workouts || []}
+      initialTotal={totalPushups}
+      username={profile?.username || user.email || ""}
+    />
+  )
 }

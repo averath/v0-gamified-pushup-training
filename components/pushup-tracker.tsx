@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Target, TrendingUp, Zap, LogOut } from "lucide-react"
+import { Target, TrendingUp, Zap, LogOut, Trophy } from "lucide-react"
 import { LevelBadge } from "@/components/level-badge"
 import { ProgressRing } from "@/components/progress-ring"
 import { AddPushupsDialog } from "@/components/add-pushups-dialog"
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { getLevelProgress, getPushupsForNextLevel, getTotalPushupsForLevel } from "@/lib/level-system"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 interface Workout {
   id: string
@@ -23,10 +24,10 @@ interface Workout {
 interface PushupTrackerProps {
   initialWorkouts: Workout[]
   initialTotal: number
-  userEmail: string
+  username: string // Changed from userEmail to username
 }
 
-export function PushupTracker({ initialWorkouts, initialTotal, userEmail }: PushupTrackerProps) {
+export function PushupTracker({ initialWorkouts, initialTotal, username }: PushupTrackerProps) {
   const [totalPushups, setTotalPushups] = useState(initialTotal)
   const [workouts, setWorkouts] = useState(initialWorkouts)
   const [showLevelUp, setShowLevelUp] = useState(false)
@@ -102,12 +103,20 @@ export function PushupTracker({ initialWorkouts, initialTotal, userEmail }: Push
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Push-Up Master</h1>
-              <p className="text-sm text-muted-foreground">{userEmail}</p>
+              <p className="text-sm text-muted-foreground">@{username}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground">
-            <LogOut className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/leaderboard">
+              <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+                <Trophy className="w-4 h-4" />
+                Leaderboard
+              </Button>
+            </Link>
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground">
+              <LogOut className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </header>
 
