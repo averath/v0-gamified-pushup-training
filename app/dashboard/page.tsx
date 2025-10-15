@@ -7,6 +7,8 @@ export const revalidate = 60
 export default async function DashboardPage() {
   const supabase = await createClient()
 
+  console.log("[v0] Fetching dashboard data...")
+
   const [
     {
       data: { user },
@@ -21,9 +23,19 @@ export default async function DashboardPage() {
     supabase
       .from("workouts")
       .select("pushups, exercise_type")
-      .then(({ data }) => {
-        const pushups = data?.filter((w) => w.exercise_type === "pushups").reduce((sum, w) => sum + w.pushups, 0) || 0
+      .then(({ data, error }) => {
+        console.log("[v0] Workouts data:", data)
+        console.log("[v0] Workouts error:", error)
+
+        const pushups =
+          data
+            ?.filter((w) => !w.exercise_type || w.exercise_type === "pushups")
+            .reduce((sum, w) => sum + w.pushups, 0) || 0
         const squats = data?.filter((w) => w.exercise_type === "squats").reduce((sum, w) => sum + w.pushups, 0) || 0
+
+        console.log("[v0] Total pushups:", pushups)
+        console.log("[v0] Total squats:", squats)
+
         return { pushups, squats }
       }),
   ])
@@ -34,8 +46,11 @@ export default async function DashboardPage() {
 
   const { data: workouts, error } = workoutsResult
 
+  console.log("[v0] Workouts result:", workouts)
+  console.log("[v0] Workouts error:", error)
+
   if (error) {
-    console.error("Error fetching workouts:", error)
+    console.error("[v0] Error fetching workouts:", error)
   }
 
   return (
