@@ -78,7 +78,7 @@ export function PushupTracker({ initialWorkouts, initialTotal, username }: Pushu
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push("/auth/login")
+    router.push("/") // redirect to home instead of login after logout
     router.refresh()
   }
 
@@ -102,7 +102,8 @@ export function PushupTracker({ initialWorkouts, initialTotal, username }: Pushu
               <Zap className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Push-Up Master</h1>
+              <h1 className="text-2xl font-bold text-foreground">PUSHUP TRACK</h1>{" "}
+              {/* updated header title to match landing page branding */}
               <p className="text-sm text-muted-foreground">@{username}</p>
             </div>
           </div>
