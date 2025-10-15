@@ -2,37 +2,43 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PushupTracker } from "@/components/pushup-tracker"
 
+export const revalidate = 60 // Revalidate every 60 seconds
+
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const [
+    {
+      data: { user },
+    },
+    profileResult,
+    workoutsResult,
+    totalResult,
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from("profiles").select("username").limit(1).maybeSingle(),
+    supabase.from("workouts").select("*").order("created_at", { ascending: false }).limit(50),
+    supabase
+      .from("workouts")
+      .select("pushups")
+      .then(({ data }) => data?.reduce((sum, w) => sum + w.pushups, 0) || 0),
+  ])
 
   if (!user) {
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).single()
-
-  const { data: workouts, error } = await supabase
-    .from("workouts")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(50)
+  const { data: workouts, error } = workoutsResult
 
   if (error) {
     console.error("Error fetching workouts:", error)
   }
 
-  const totalPushups = workouts?.reduce((sum, workout) => sum + workout.pushups, 0) || 0
-
   return (
     <PushupTracker
       initialWorkouts={workouts || []}
-      initialTotal={totalPushups}
-      username={profile?.username || user.email || ""}
+      initialTotal={totalResult}
+      username={profileResult.data?.username || user.email || ""}
     />
   )
 }

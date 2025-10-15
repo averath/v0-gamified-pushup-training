@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Target, TrendingUp, Zap, LogOut, Trophy } from "lucide-react"
 import { LevelBadge } from "@/components/level-badge"
 import { ProgressRing } from "@/components/progress-ring"
@@ -82,15 +82,17 @@ export function PushupTracker({ initialWorkouts, initialTotal, username }: Pushu
     router.refresh()
   }
 
-  const levelData = getLevelProgress(totalPushups)
-  const pushupsForNextLevel = getPushupsForNextLevel(levelData.currentLevel)
-
-  // Convert database workouts to session format for WorkoutHistory
-  const sessions = workouts.map((w) => ({
-    id: w.id,
-    pushups: w.pushups,
-    timestamp: new Date(w.created_at).getTime(),
-  }))
+  const levelData = useMemo(() => getLevelProgress(totalPushups), [totalPushups])
+  const pushupsForNextLevel = useMemo(() => getPushupsForNextLevel(levelData.currentLevel), [levelData.currentLevel])
+  const sessions = useMemo(
+    () =>
+      workouts.map((w) => ({
+        id: w.id,
+        pushups: w.pushups,
+        timestamp: new Date(w.created_at).getTime(),
+      })),
+    [workouts],
+  )
 
   return (
     <main className="min-h-screen bg-background">

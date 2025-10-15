@@ -12,19 +12,22 @@ interface LeaderboardEntry {
   workout_count: number
 }
 
+export const revalidate = 30 // Revalidate every 30 seconds
+
 export default async function LeaderboardPage() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const [
+    {
+      data: { user },
+    },
+    leaderboardResult,
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from("leaderboard_stats").select("*").order("total_pushups", { ascending: false }).limit(100),
+  ])
 
-  // Fetch leaderboard data
-  const { data: leaderboard, error } = await supabase
-    .from("leaderboard_stats")
-    .select("*")
-    .order("total_pushups", { ascending: false })
-    .limit(100)
+  const { data: leaderboard, error } = leaderboardResult
 
   if (error) {
     console.error("Error fetching leaderboard:", error)
@@ -37,10 +40,10 @@ export default async function LeaderboardPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/">
+          <Link href={user ? "/dashboard" : "/"}>
             <Button variant="ghost" className="mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
+              Back to {user ? "Dashboard" : "Home"}
             </Button>
           </Link>
           <div className="flex items-center gap-3 mb-2">
