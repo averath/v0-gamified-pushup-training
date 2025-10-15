@@ -1,8 +1,14 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Trophy, TrendingUp, Users, Zap } from "lucide-react"
+import { createClient } from "@/lib/supabase/server"
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -15,12 +21,20 @@ export default function LandingPage() {
             <span className="font-bold text-xl tracking-tight">PUSHUP TRACK</span>
           </div>
           <nav className="flex items-center gap-4">
-            <Link href="/auth/login">
-              <Button variant="ghost">Log in</Button>
-            </Link>
-            <Link href="/auth/sign-up">
-              <Button>Sign up</Button>
-            </Link>
+            {user ? (
+              <Link href="/dashboard">
+                <Button>Go to Dashboard</Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/auth/login">
+                  <Button variant="ghost">Log in</Button>
+                </Link>
+                <Link href="/auth/sign-up">
+                  <Button>Sign up</Button>
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -47,11 +61,19 @@ export default function LandingPage() {
               experience.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Link href="/auth/sign-up">
-                <Button size="lg" className="text-lg px-8 h-14 font-bold">
-                  Start Training Free
-                </Button>
-              </Link>
+              {user ? (
+                <Link href="/dashboard">
+                  <Button size="lg" className="text-lg px-8 h-14 font-bold">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/auth/sign-up">
+                  <Button size="lg" className="text-lg px-8 h-14 font-bold">
+                    Start Training Free
+                  </Button>
+                </Link>
+              )}
               <Link href="/leaderboard">
                 <Button size="lg" variant="outline" className="text-lg px-8 h-14 font-bold bg-transparent">
                   View Leaderboard
@@ -136,11 +158,19 @@ export default function LandingPage() {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Join the community of dedicated athletes pushing their limits every single day.
           </p>
-          <Link href="/auth/sign-up">
-            <Button size="lg" className="text-lg px-12 h-14 font-bold">
-              Start Your Journey
-            </Button>
-          </Link>
+          {user ? (
+            <Link href="/dashboard">
+              <Button size="lg" className="text-lg px-12 h-14 font-bold">
+                Continue Training
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/auth/sign-up">
+              <Button size="lg" className="text-lg px-12 h-14 font-bold">
+                Start Your Journey
+              </Button>
+            </Link>
+          )}
         </div>
       </section>
 
