@@ -18,7 +18,7 @@ export default async function LandingPage() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <Zap className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-xl tracking-tight">REP TRACK</span>
+            <span className="font-bold text-xl tracking-tight">LEVEL FITNESS</span>
           </div>
           <nav className="flex items-center gap-4">
             {user ? (
@@ -52,13 +52,13 @@ export default async function LandingPage() {
             <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-balance leading-[0.9]">
               TRANSFORM
               <br />
-              <span className="text-primary">EVERY REP</span>
+              <span className="text-primary">WORKOUTS</span>
               <br />
               INTO POWER
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto text-pretty">
-              Track push-ups, pull-ups, and squats. Level up your strength. Compete with athletes worldwide in the
-              ultimate gamified training experience.
+              Track every rep. Level up your strength. Compete with athletes worldwide in the ultimate gamified training
+              experience.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               {user ? (
@@ -93,8 +93,8 @@ export default async function LandingPage() {
               <div className="text-muted-foreground font-medium">Progressive Levels</div>
             </div>
             <div className="space-y-2">
-              <div className="text-5xl font-black text-accent">3</div>
-              <div className="text-muted-foreground font-medium">Exercise Types</div>
+              <div className="text-5xl font-black text-accent">1000+</div>
+              <div className="text-muted-foreground font-medium">Reps Tracked</div>
             </div>
             <div className="space-y-2">
               <div className="text-5xl font-black text-primary">∞</div>
@@ -120,8 +120,8 @@ export default async function LandingPage() {
               </div>
               <h3 className="text-2xl font-bold">Progressive Leveling</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Start at Level 1 with just 10 reps. Each level requires 10x more. Track your progress across push-ups,
-                pull-ups, and squats independently.
+                Start at Level 1 with just 10 reps. Each level requires 10x more. Watch your strength multiply
+                exponentially across all your exercises.
               </p>
             </div>
 
@@ -182,9 +182,9 @@ export default async function LandingPage() {
               <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
                 <Zap className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="font-bold">REP TRACK</span>
+              <span className="font-bold">LEVEL FITNESS</span>
             </div>
-            <p className="text-sm text-muted-foreground">© 2025 Rep Track. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">© 2025 Level Fitness. All rights reserved.</p>
           </div>
         </div>
       </footer>
