@@ -8,6 +8,7 @@ import { AddPushupsDialog } from "@/components/add-pushups-dialog"
 import { LevelUpCelebration } from "@/components/level-up-celebration"
 import { WorkoutHistory } from "@/components/workout-history"
 import { StatsCard } from "@/components/stats-card"
+import { EditUsernameDialog } from "@/components/edit-username-dialog"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getLevelProgress, getPushupsForNextLevel, getTotalPushupsForLevel } from "@/lib/level-system"
@@ -40,6 +41,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username }: Push
   const [newLevel, setNewLevel] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [activeExercise, setActiveExercise] = useState<"pushups" | "pullups" | "squats">("pushups")
+  const [currentUsername, setCurrentUsername] = useState(username)
   const router = useRouter()
   const supabase = createClient()
 
@@ -130,7 +132,10 @@ export function PushupTracker({ initialWorkouts, initialTotals, username }: Push
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">PUSHUP TRACK</h1>
-              <p className="text-sm text-muted-foreground">@{username}</p>
+              <div className="flex items-center gap-1">
+                <p className="text-sm text-muted-foreground">@{currentUsername}</p>
+                <EditUsernameDialog currentUsername={currentUsername} onUsernameUpdate={setCurrentUsername} />
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
