@@ -7,6 +7,19 @@ interface WorkoutHistoryProps {
 }
 
 export function WorkoutHistory({ sessions }: WorkoutHistoryProps) {
+  const getExerciseName = (type?: string) => {
+    switch (type) {
+      case "pushups":
+        return "push-up"
+      case "pullups":
+        return "pull-up"
+      case "squats":
+        return "squat"
+      default:
+        return "rep"
+    }
+  }
+
   if (sessions.length === 0) {
     return (
       <Card>
@@ -35,30 +48,34 @@ export function WorkoutHistory({ sessions }: WorkoutHistoryProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {recentSessions.map((session) => (
-            <div
-              key={session.id}
-              className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="text-primary font-bold">{session.pushups}</span>
-                </div>
-                <div>
-                  <p className="font-medium">
-                    {session.pushups} push-up{session.pushups !== 1 ? "s" : ""}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(session.timestamp).toLocaleDateString()} at{" "}
-                    {new Date(session.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
+          {recentSessions.map((session) => {
+            const exerciseName = getExerciseName(session.exercise_type)
+            return (
+              <div
+                key={session.id}
+                className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span className="text-primary font-bold">{session.pushups}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium">
+                      {session.pushups} {exerciseName}
+                      {session.pushups !== 1 ? "s" : ""}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(session.timestamp).toLocaleDateString()} at{" "}
+                      {new Date(session.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </CardContent>
     </Card>

@@ -104,6 +104,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username }: Push
           id: w.id,
           pushups: w.pushups,
           timestamp: new Date(w.created_at).getTime(),
+          exercise_type: w.exercise_type || "pushups",
         })),
     [workouts, activeExercise],
   )

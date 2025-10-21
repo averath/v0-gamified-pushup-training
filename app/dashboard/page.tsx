@@ -15,15 +15,21 @@ export default async function DashboardPage() {
     redirect("/auth/login")
   }
 
-  const [profileResult, workoutsResult] = await Promise.all([
+  const [profileResult, recentWorkoutsResult, totalsResult] = await Promise.all([
     supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
-    supabase.from("workouts").select("*").order("created_at", { ascending: false }).limit(100),
+    supabase.from("workouts").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
+    supabase.from("workouts").select("pushups, exercise_type").eq("user_id", user.id),
   ])
 
-  const { data: workouts, error } = workoutsResult
+  const { data: recentWorkouts, error: workoutsError } = recentWorkoutsResult
+  const { data: allWorkouts, error: totalsError } = totalsResult
 
-  if (error) {
-    console.error("Error fetching workouts:", error)
+  if (workoutsError) {
+    console.error("Error fetching workouts:", workoutsError)
+  }
+
+  if (totalsError) {
+    console.error("Error fetching totals:", totalsError)
   }
 
   const totals = {
@@ -32,14 +38,14 @@ export default async function DashboardPage() {
     squats: 0,
   }
 
-  workouts?.forEach((w) => {
+  allWorkouts?.forEach((w) => {
     const type = w.exercise_type || "pushups"
     totals[type as keyof typeof totals] += w.pushups
   })
 
   return (
     <PushupTracker
-      initialWorkouts={workouts || []}
+      initialWorkouts={recentWorkouts || []}
       initialTotals={totals}
       username={profileResult.data?.username || user.email || ""}
     />

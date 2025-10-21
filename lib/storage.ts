@@ -2,6 +2,7 @@ export interface WorkoutSession {
   id: string
   pushups: number
   timestamp: number
+  exercise_type?: string
 }
 
 export interface UserProgress {
@@ -33,12 +34,13 @@ export function saveProgress(progress: UserProgress): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
 }
 
-export function addWorkoutSession(pushups: number): UserProgress {
+export function addWorkoutSession(pushups: number, exercise_type?: string): UserProgress {
   const progress = loadProgress()
   const session: WorkoutSession = {
     id: Date.now().toString(),
     pushups,
     timestamp: Date.now(),
+    exercise_type,
   }
 
   progress.totalPushups += pushups
