@@ -23,92 +23,136 @@ export function ShareResultsDialog({
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     if (open && canvasRef.current) {
+      console.log("[v0] Generating share image...")
       generateShareImage()
     }
   }, [open, username, exerciseName, totalReps, level])
 
-  const generateShareImage = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    // Set canvas size
-    canvas.width = 1200
-    canvas.height = 630
-
-    // Background gradient
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
-    gradient.addColorStop(0, "#0a0a0a")
-    gradient.addColorStop(1, "#1a1a1a")
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-    // Accent gradient overlay
-    const accentGradient = ctx.createRadialGradient(
-      canvas.width / 2,
-      canvas.height / 2,
-      0,
-      canvas.width / 2,
-      canvas.height / 2,
-      canvas.width / 2,
-    )
-    accentGradient.addColorStop(0, "rgba(255, 107, 53, 0.15)")
-    accentGradient.addColorStop(1, "rgba(0, 229, 255, 0.1)")
-    ctx.fillStyle = accentGradient
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-    // Brand
-    ctx.fillStyle = "#ffffff"
-    ctx.font = "bold 48px system-ui"
-    ctx.fillText("LEVEL FITNESS", 80, 100)
-
-    // Level badge
-    ctx.fillStyle = "#ff6b35"
+  const drawRoundedRect = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number,
+  ) => {
     ctx.beginPath()
-    ctx.roundRect(80, 180, 200, 120, 16)
-    ctx.fill()
+    ctx.moveTo(x + radius, y)
+    ctx.lineTo(x + width - radius, y)
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius)
+    ctx.lineTo(x + width, y + height - radius)
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
+    ctx.lineTo(x + radius, y + height)
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius)
+    ctx.lineTo(x, y + radius)
+    ctx.quadraticCurveTo(x, y, x + radius, y)
+    ctx.closePath()
+  }
 
-    ctx.fillStyle = "#ffffff"
-    ctx.font = "bold 72px system-ui"
-    ctx.textAlign = "center"
-    ctx.fillText(`${level}`, 180, 265)
-
-    ctx.font = "600 24px system-ui"
-    ctx.fillText("LEVEL", 180, 150)
-
-    // Stats
-    ctx.textAlign = "left"
-    ctx.fillStyle = "#ffffff"
-    ctx.font = "bold 64px system-ui"
-    ctx.fillText(`${totalReps.toLocaleString()}`, 350, 240)
-
-    ctx.fillStyle = "#a0a0a0"
-    ctx.font = "500 32px system-ui"
-    ctx.fillText(`${exerciseName}`, 350, 290)
-
-    // Username
-    ctx.fillStyle = "#00e5ff"
-    ctx.font = "600 40px system-ui"
-    ctx.fillText(`@${username}`, 80, 450)
-
-    // Workout count
-    ctx.fillStyle = "#ffffff"
-    ctx.font = "500 28px system-ui"
-    ctx.fillText(`${workoutCount} workouts completed`, 80, 510)
-
-    // Convert to blob URL
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const url = URL.createObjectURL(blob)
-        setImageUrl(url)
+  const generateShareImage = () => {
+    try {
+      const canvas = canvasRef.current
+      if (!canvas) {
+        console.log("[v0] Canvas ref not available")
+        setError("Canvas not available")
+        return
       }
-    })
+
+      const ctx = canvas.getContext("2d")
+      if (!ctx) {
+        console.log("[v0] Could not get canvas context")
+        setError("Could not create canvas context")
+        return
+      }
+
+      console.log("[v0] Canvas context obtained, starting drawing...")
+
+      // Set canvas size
+      canvas.width = 1200
+      canvas.height = 630
+
+      // Background gradient
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
+      gradient.addColorStop(0, "#0a0a0a")
+      gradient.addColorStop(1, "#1a1a1a")
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Accent gradient overlay
+      const accentGradient = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        0,
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.width / 2,
+      )
+      accentGradient.addColorStop(0, "rgba(255, 107, 53, 0.15)")
+      accentGradient.addColorStop(1, "rgba(0, 229, 255, 0.1)")
+      ctx.fillStyle = accentGradient
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Brand
+      ctx.fillStyle = "#ffffff"
+      ctx.font = "bold 48px system-ui, -apple-system, sans-serif"
+      ctx.fillText("LEVEL FITNESS", 80, 100)
+
+      // Level badge
+      ctx.fillStyle = "#ff6b35"
+      drawRoundedRect(ctx, 80, 180, 200, 120, 16)
+      ctx.fill()
+
+      ctx.fillStyle = "#ffffff"
+      ctx.font = "bold 72px system-ui, -apple-system, sans-serif"
+      ctx.textAlign = "center"
+      ctx.fillText(`${level}`, 180, 265)
+
+      ctx.font = "600 24px system-ui, -apple-system, sans-serif"
+      ctx.fillText("LEVEL", 180, 150)
+
+      // Stats
+      ctx.textAlign = "left"
+      ctx.fillStyle = "#ffffff"
+      ctx.font = "bold 64px system-ui, -apple-system, sans-serif"
+      ctx.fillText(`${totalReps.toLocaleString()}`, 350, 240)
+
+      ctx.fillStyle = "#a0a0a0"
+      ctx.font = "500 32px system-ui, -apple-system, sans-serif"
+      ctx.fillText(`${exerciseName}`, 350, 290)
+
+      // Username
+      ctx.fillStyle = "#00e5ff"
+      ctx.font = "600 40px system-ui, -apple-system, sans-serif"
+      ctx.fillText(`@${username}`, 80, 450)
+
+      // Workout count
+      ctx.fillStyle = "#ffffff"
+      ctx.font = "500 28px system-ui, -apple-system, sans-serif"
+      ctx.fillText(`${workoutCount} workouts completed`, 80, 510)
+
+      console.log("[v0] Canvas drawing complete, converting to blob...")
+
+      // Convert to blob URL
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob)
+          setImageUrl(url)
+          setError(null)
+          console.log("[v0] Image generated successfully:", url)
+        } else {
+          console.log("[v0] Failed to create blob")
+          setError("Failed to generate image")
+        }
+      })
+    } catch (err) {
+      console.error("[v0] Error generating share image:", err)
+      setError(err instanceof Error ? err.message : "Unknown error")
+    }
   }
 
   const handleDownload = () => {
@@ -141,7 +185,7 @@ export function ShareResultsDialog({
         handleDownload()
       }
     } catch (error) {
-      console.error("Error sharing:", error)
+      console.error("[v0] Error sharing:", error)
     }
   }
 
@@ -169,18 +213,29 @@ export function ShareResultsDialog({
         </DialogHeader>
 
         <div className="space-y-6">
+          {error && (
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
+              Error generating image: {error}
+            </div>
+          )}
+
           {/* Preview */}
           <div className="relative rounded-lg overflow-hidden border border-border bg-card">
             <canvas ref={canvasRef} className="w-full h-auto" />
+            {!imageUrl && !error && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                <div className="text-muted-foreground">Generating image...</div>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3">
-            <Button onClick={handleNativeShare} className="gap-2">
+            <Button onClick={handleNativeShare} className="gap-2" disabled={!imageUrl}>
               <Share2 className="w-4 h-4" />
               Share Image
             </Button>
-            <Button onClick={handleDownload} variant="outline" className="gap-2 bg-transparent">
+            <Button onClick={handleDownload} variant="outline" className="gap-2 bg-transparent" disabled={!imageUrl}>
               <Download className="w-4 h-4" />
               Download
             </Button>
