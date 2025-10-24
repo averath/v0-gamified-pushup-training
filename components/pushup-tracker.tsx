@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ShareResultsDialog } from "@/components/share-results-dialog"
 
 interface ExerciseType {
   id: string
@@ -138,6 +139,13 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <ShareResultsDialog
+              username={currentUsername}
+              exerciseName={getExerciseName(activeExercise)}
+              totalReps={currentTotal}
+              level={levelData.currentLevel}
+              workoutCount={sessions.length}
+            />
             <Link href="/leaderboard">
               <Button variant="outline" size="sm" className="gap-2 bg-transparent">
                 <Trophy className="w-4 h-4" />
