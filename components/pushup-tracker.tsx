@@ -10,11 +10,11 @@ import { WorkoutHistory } from "@/components/workout-history"
 import { StatsCard } from "@/components/stats-card"
 import { EditUsernameDialog } from "@/components/edit-username-dialog"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getLevelProgress, getPushupsForNextLevel, getTotalPushupsForLevel } from "@/lib/level-system"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface ExerciseType {
   id: string
@@ -130,7 +130,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
               <Zap className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">PUSHUP TRACK</h1>
+              <h1 className="text-2xl font-bold text-foreground">LEVEL FITNESS</h1>
               <div className="flex items-center gap-1">
                 <p className="text-sm text-muted-foreground">@{currentUsername}</p>
                 <EditUsernameDialog currentUsername={currentUsername} onUsernameUpdate={setCurrentUsername} />
@@ -152,78 +152,87 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Tabs value={activeExercise} onValueChange={setActiveExercise} className="mb-8">
-          <TabsList
-            className={`grid w-full mb-8`}
-            style={{ gridTemplateColumns: `repeat(${exerciseTypes.length}, minmax(0, 1fr))` }}
-          >
-            {exerciseTypes.map((exercise) => (
-              <TabsTrigger key={exercise.id} value={exercise.id}>
-                {exercise.icon && <span className="mr-1">{exercise.icon}</span>}
-                {exercise.display_name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <TabsContent value={activeExercise} className="mt-0">
-            {/* Main Level Display */}
-            <div className="mb-8">
-              <div className="relative flex flex-col items-center justify-center py-12 px-6 rounded-2xl bg-gradient-to-br from-card via-card to-primary/5 border border-border">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl" />
-                <div className="relative z-10 flex flex-col items-center gap-6">
-                  <div className="text-center">
-                    <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-                      Current Level
-                    </p>
-                    <LevelBadge level={levelData.currentLevel} size="lg" />
+        {/* Select Exercise Dropdown */}
+        <div className="mb-8">
+          <label className="text-sm font-medium text-muted-foreground mb-2 block">Select Exercise</label>
+          <Select value={activeExercise} onValueChange={setActiveExercise}>
+            <SelectTrigger className="w-full max-w-xs bg-card border-border">
+              <SelectValue>
+                <div className="flex items-center gap-2">
+                  {currentExercise?.icon && <span>{currentExercise.icon}</span>}
+                  <span>{currentExercise?.display_name || "Select exercise"}</span>
+                </div>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {exerciseTypes.map((exercise) => (
+                <SelectItem key={exercise.id} value={exercise.id}>
+                  <div className="flex items-center gap-2">
+                    {exercise.icon && <span>{exercise.icon}</span>}
+                    <span>{exercise.display_name}</span>
                   </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-                  {/* Progress Ring */}
-                  <div className="relative">
-                    <ProgressRing progress={levelData.progressPercentage} size={240} strokeWidth={16} />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <p className="text-5xl font-bold text-foreground">{Math.round(levelData.progressPercentage)}%</p>
-                      <p className="text-sm text-muted-foreground mt-1">to Level {levelData.nextLevel}</p>
-                    </div>
-                  </div>
+        {/* Main Level Display */}
+        <div className="mb-8">
+          <div className="relative flex flex-col items-center justify-center py-12 px-6 rounded-2xl bg-gradient-to-br from-card via-card to-primary/5 border border-border">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl" />
+            <div className="relative z-10 flex flex-col items-center gap-6">
+              <div className="text-center">
+                <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                  Current Level
+                </p>
+                <LevelBadge level={levelData.currentLevel} size="lg" />
+              </div>
 
-                  {/* Progress Text */}
-                  <div className="text-center">
-                    <p className="text-lg text-muted-foreground">
-                      <span className="text-accent font-bold text-2xl">{levelData.progressInLevel}</span>
-                      <span className="mx-2">/</span>
-                      <span className="font-semibold">{pushupsForNextLevel}</span>
-                      <span className="ml-2">{getExerciseName(activeExercise).toLowerCase()}</span>
-                    </p>
-                  </div>
-
-                  {/* Add Button */}
-                  <AddPushupsDialog onAdd={handleAddPushups} disabled={isLoading} />
+              {/* Progress Ring */}
+              <div className="relative">
+                <ProgressRing progress={levelData.progressPercentage} size={240} strokeWidth={16} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <p className="text-5xl font-bold text-foreground">{Math.round(levelData.progressPercentage)}%</p>
+                  <p className="text-sm text-muted-foreground mt-1">to Level {levelData.nextLevel}</p>
                 </div>
               </div>
-            </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <StatsCard
-                title={`Total ${getExerciseName(activeExercise)}`}
-                value={currentTotal.toLocaleString()}
-                icon={Target}
-                description="All time"
-              />
-              <StatsCard
-                title="Current Level"
-                value={levelData.currentLevel}
-                icon={TrendingUp}
-                description={`Next: ${getTotalPushupsForLevel(levelData.nextLevel).toLocaleString()} total`}
-              />
-              <StatsCard title="Workouts" value={sessions.length} icon={Zap} description="Sessions logged" />
-            </div>
+              {/* Progress Text */}
+              <div className="text-center">
+                <p className="text-lg text-muted-foreground">
+                  <span className="text-accent font-bold text-2xl">{levelData.progressInLevel}</span>
+                  <span className="mx-2">/</span>
+                  <span className="font-semibold">{pushupsForNextLevel}</span>
+                  <span className="ml-2">{getExerciseName(activeExercise).toLowerCase()}</span>
+                </p>
+              </div>
 
-            {/* Workout History */}
-            <WorkoutHistory sessions={sessions} />
-          </TabsContent>
-        </Tabs>
+              {/* Add Button */}
+              <AddPushupsDialog onAdd={handleAddPushups} disabled={isLoading} />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <StatsCard
+            title={`Total ${getExerciseName(activeExercise)}`}
+            value={currentTotal.toLocaleString()}
+            icon={Target}
+            description="All time"
+          />
+          <StatsCard
+            title="Current Level"
+            value={levelData.currentLevel}
+            icon={TrendingUp}
+            description={`Next: ${getTotalPushupsForLevel(levelData.nextLevel).toLocaleString()} total`}
+          />
+          <StatsCard title="Workouts" value={sessions.length} icon={Zap} description="Sessions logged" />
+        </div>
+
+        {/* Workout History */}
+        <WorkoutHistory sessions={sessions} />
       </div>
 
       {/* Level Up Celebration */}

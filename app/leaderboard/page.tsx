@@ -6,8 +6,8 @@ import { Trophy, Medal, Award, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useEffect, useState } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface LeaderboardEntry {
   id: string
@@ -154,17 +154,6 @@ export default function LeaderboardPage() {
     )
   }
 
-  if (exerciseTypesLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading leaderboard...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -183,25 +172,52 @@ export default function LeaderboardPage() {
           <p className="text-muted-foreground">Top training champions</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList
-            className="grid w-full mb-6"
-            style={{ gridTemplateColumns: `repeat(${exerciseTypes.length}, minmax(0, 1fr))` }}
-          >
-            {exerciseTypes.map((exercise) => (
-              <TabsTrigger key={exercise.id} value={exercise.id}>
-                {exercise.icon && <span className="mr-1">{exercise.icon}</span>}
-                {exercise.display_name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+        {/* Select Exercise Dropdown */}
+        {!exerciseTypesLoading && (
+          <div className="mb-6">
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">Select Exercise</label>
+            <Select value={activeTab} onValueChange={setActiveTab}>
+              <SelectTrigger className="w-full max-w-xs bg-card border-border">
+                <SelectValue>
+                  {(() => {
+                    const current = exerciseTypes.find((e) => e.id === activeTab)
+                    return (
+                      <div className="flex items-center gap-2">
+                        {current?.icon && <span>{current.icon}</span>}
+                        <span>{current?.display_name || "Select exercise"}</span>
+                      </div>
+                    )
+                  })()}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {exerciseTypes.map((exercise) => (
+                  <SelectItem key={exercise.id} value={exercise.id}>
+                    <div className="flex items-center gap-2">
+                      {exercise.icon && <span>{exercise.icon}</span>}
+                      <span>{exercise.display_name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
-          {exerciseTypes.map((exercise) => (
-            <TabsContent key={exercise.id} value={exercise.id}>
-              {renderLeaderboard(leaderboardData[exercise.id] || null, exercise.display_name, exercise.id)}
-            </TabsContent>
-          ))}
-        </Tabs>
+        {/* Leaderboard Content */}
+        {exerciseTypesLoading ? (
+          <Card className="p-12 bg-card border-border text-center">
+            <Loader2 className="h-12 w-12 text-primary mx-auto mb-3 animate-spin" />
+            <p className="text-muted-foreground">Loading leaderboard...</p>
+          </Card>
+        ) : (
+          activeTab &&
+          renderLeaderboard(
+            leaderboardData[activeTab] || null,
+            exerciseTypes.find((e) => e.id === activeTab)?.display_name || "",
+            activeTab,
+          )
+        )}
       </div>
     </div>
   )
