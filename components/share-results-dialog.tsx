@@ -184,7 +184,7 @@ export function ShareResultsDialog({
   }
 
   const shareText = `I'm Level ${level} in ${exerciseName} with ${totalReps.toLocaleString()} total reps! 💪 Join me on Level Fitness!`
-  const shareUrl = typeof window !== "undefined" ? window.location.origin : ""
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/leaderboard` : ""
 
   const handleNativeShare = async () => {
     if (!imageUrl) return
@@ -210,7 +210,7 @@ export function ShareResultsDialog({
   }
 
   const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`)
+    await navigator.clipboard.writeText(shareUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -291,7 +291,7 @@ export function ShareResultsDialog({
             {copied ? (
               <>
                 <Check className="w-4 h-4" />
-                Copied!
+                Link Copied!
               </>
             ) : (
               <>
