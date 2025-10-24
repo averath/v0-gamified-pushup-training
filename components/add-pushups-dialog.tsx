@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +12,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { createClient } from "@/lib/supabase/client"
+
+interface ExerciseType {
+  id: string
+  name: string
+  display_name: string
+  icon: string | null
+}
 
 interface AddPushupsDialogProps {
   onAdd: (count: number, exerciseType: string) => void
@@ -21,7 +29,26 @@ interface AddPushupsDialogProps {
 export function AddPushupsDialog({ onAdd, disabled }: AddPushupsDialogProps) {
   const [open, setOpen] = useState(false)
   const [count, setCount] = useState(10)
-  const [exerciseType, setExerciseType] = useState<"pushups" | "pullups" | "squats">("pushups")
+  const [exerciseType, setExerciseType] = useState<string>("pushups")
+  const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function fetchExerciseTypes() {
+      const { data } = await supabase.from("exercise_types").select("*").order("created_at", { ascending: true })
+
+      if (data) {
+        setExerciseTypes(data)
+        if (data.length > 0) {
+          setExerciseType(data[0].id)
+        }
+      }
+      setLoading(false)
+    }
+    fetchExerciseTypes()
+  }, [])
 
   const quickCounts = [5, 10, 20, 50]
 
@@ -34,14 +61,8 @@ export function AddPushupsDialog({ onAdd, disabled }: AddPushupsDialogProps) {
   }
 
   const getExerciseName = () => {
-    switch (exerciseType) {
-      case "pushups":
-        return "Push-ups"
-      case "pullups":
-        return "Pull-ups"
-      case "squats":
-        return "Squats"
-    }
+    const exercise = exerciseTypes.find((e) => e.id === exerciseType)
+    return exercise?.display_name || "Reps"
   }
 
   return (
@@ -57,13 +78,18 @@ export function AddPushupsDialog({ onAdd, disabled }: AddPushupsDialogProps) {
           <DialogDescription>Select exercise type and reps completed</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-6 py-4">
-          <Tabs value={exerciseType} onValueChange={(v) => setExerciseType(v as any)}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="pushups">Push-ups</TabsTrigger>
-              <TabsTrigger value="pullups">Pull-ups</TabsTrigger>
-              <TabsTrigger value="squats">Squats</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {!loading && exerciseTypes.length > 0 && (
+            <Tabs value={exerciseType} onValueChange={setExerciseType}>
+              <TabsList className={`grid w-full grid-cols-${Math.min(exerciseTypes.length, 4)}`}>
+                {exerciseTypes.map((exercise) => (
+                  <TabsTrigger key={exercise.id} value={exercise.id}>
+                    {exercise.icon && <span className="mr-1">{exercise.icon}</span>}
+                    {exercise.display_name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          )}
 
           {/* Counter */}
           <div className="flex items-center justify-center gap-4">
@@ -104,7 +130,7 @@ export function AddPushupsDialog({ onAdd, disabled }: AddPushupsDialogProps) {
           </div>
 
           {/* Submit button */}
-          <Button onClick={handleAdd} size="lg" className="w-full text-lg font-bold" disabled={disabled}>
+          <Button onClick={handleAdd} size="lg" className="w-full text-lg font-bold" disabled={disabled || loading}>
             {disabled ? "Saving..." : `Add ${count} ${getExerciseName()}`}
           </Button>
         </div>

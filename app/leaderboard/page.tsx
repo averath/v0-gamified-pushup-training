@@ -17,23 +17,42 @@ interface LeaderboardEntry {
   workout_count: number
 }
 
-type ExerciseType = "pushups" | "pullups" | "squats"
+interface ExerciseType {
+  id: string
+  name: string
+  display_name: string
+  icon: string | null
+}
 
 export default function LeaderboardPage() {
-  const [activeTab, setActiveTab] = useState<ExerciseType>("pushups")
+  const [activeTab, setActiveTab] = useState<string>("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [leaderboardData, setLeaderboardData] = useState<Record<ExerciseType, LeaderboardEntry[] | null>>({
-    pushups: null,
-    pullups: null,
-    squats: null,
-  })
-  const [loading, setLoading] = useState<Record<ExerciseType, boolean>>({
-    pushups: true,
-    pullups: false,
-    squats: false,
-  })
+  const [leaderboardData, setLeaderboardData] = useState<Record<string, LeaderboardEntry[] | null>>({})
+  const [loading, setLoading] = useState<Record<string, boolean>>({})
+  const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([])
+  const [exerciseTypesLoading, setExerciseTypesLoading] = useState(true)
 
   const supabase = createClient()
+
+  useEffect(() => {
+    async function fetchExerciseTypes() {
+      const { data } = await supabase.from("exercise_types").select("*").order("created_at", { ascending: true })
+
+      if (data && data.length > 0) {
+        setExerciseTypes(data)
+        setActiveTab(data[0].id)
+
+        // Initialize loading states
+        const initialLoading: Record<string, boolean> = {}
+        data.forEach((type) => {
+          initialLoading[type.id] = type.id === data[0].id
+        })
+        setLoading(initialLoading)
+      }
+      setExerciseTypesLoading(false)
+    }
+    fetchExerciseTypes()
+  }, [])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -42,9 +61,11 @@ export default function LeaderboardPage() {
   }, [])
 
   useEffect(() => {
-    const fetchLeaderboard = async (exerciseType: ExerciseType) => {
+    if (!activeTab) return
+
+    const fetchLeaderboard = async (exerciseType: string) => {
       // Skip if already loaded
-      if (leaderboardData[exerciseType] !== null) return
+      if (leaderboardData[exerciseType] !== undefined && leaderboardData[exerciseType] !== null) return
 
       setLoading((prev) => ({ ...prev, [exerciseType]: true }))
 
@@ -65,7 +86,7 @@ export default function LeaderboardPage() {
     fetchLeaderboard(activeTab)
   }, [activeTab])
 
-  const renderLeaderboard = (data: LeaderboardEntry[] | null, exerciseName: string, exerciseType: ExerciseType) => {
+  const renderLeaderboard = (data: LeaderboardEntry[] | null, exerciseName: string, exerciseType: string) => {
     if (loading[exerciseType]) {
       return (
         <Card className="p-12 bg-card border-border text-center">
@@ -133,6 +154,17 @@ export default function LeaderboardPage() {
     )
   }
 
+  if (exerciseTypesLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading leaderboard...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -151,21 +183,24 @@ export default function LeaderboardPage() {
           <p className="text-muted-foreground">Top training champions</p>
         </div>
 
-        <Tabs
-          defaultValue="pushups"
-          value={activeTab}
-          onValueChange={(v) => setActiveTab(v as ExerciseType)}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="pushups">Push-ups</TabsTrigger>
-            <TabsTrigger value="pullups">Pull-ups</TabsTrigger>
-            <TabsTrigger value="squats">Squats</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList
+            className="grid w-full mb-6"
+            style={{ gridTemplateColumns: `repeat(${exerciseTypes.length}, minmax(0, 1fr))` }}
+          >
+            {exerciseTypes.map((exercise) => (
+              <TabsTrigger key={exercise.id} value={exercise.id}>
+                {exercise.icon && <span className="mr-1">{exercise.icon}</span>}
+                {exercise.display_name}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          <TabsContent value="pushups">{renderLeaderboard(leaderboardData.pushups, "Push-ups", "pushups")}</TabsContent>
-          <TabsContent value="pullups">{renderLeaderboard(leaderboardData.pullups, "Pull-ups", "pullups")}</TabsContent>
-          <TabsContent value="squats">{renderLeaderboard(leaderboardData.squats, "Squats", "squats")}</TabsContent>
+          {exerciseTypes.map((exercise) => (
+            <TabsContent key={exercise.id} value={exercise.id}>
+              {renderLeaderboard(leaderboardData[exercise.id] || null, exercise.display_name, exercise.id)}
+            </TabsContent>
+          ))}
         </Tabs>
       </div>
     </div>

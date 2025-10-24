@@ -16,6 +16,13 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
+interface ExerciseType {
+  id: string
+  name: string
+  display_name: string
+  icon: string | null
+}
+
 interface Workout {
   id: string
   user_id: string
@@ -26,21 +33,18 @@ interface Workout {
 
 interface PushupTrackerProps {
   initialWorkouts: Workout[]
-  initialTotals: {
-    pushups: number
-    pullups: number
-    squats: number
-  }
+  initialTotals: Record<string, number>
   username: string
+  exerciseTypes: ExerciseType[]
 }
 
-export function PushupTracker({ initialWorkouts, initialTotals, username }: PushupTrackerProps) {
+export function PushupTracker({ initialWorkouts, initialTotals, username, exerciseTypes }: PushupTrackerProps) {
   const [totals, setTotals] = useState(initialTotals)
   const [workouts, setWorkouts] = useState(initialWorkouts)
   const [showLevelUp, setShowLevelUp] = useState(false)
   const [newLevel, setNewLevel] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
-  const [activeExercise, setActiveExercise] = useState<"pushups" | "pullups" | "squats">("pushups")
+  const [activeExercise, setActiveExercise] = useState<string>(exerciseTypes[0]?.id || "pushups")
   const [currentUsername, setCurrentUsername] = useState(username)
   const router = useRouter()
   const supabase = createClient()
@@ -48,7 +52,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username }: Push
   const handleAddPushups = async (count: number, exerciseType: string) => {
     setIsLoading(true)
     try {
-      const oldLevel = getLevelProgress(totals[exerciseType as keyof typeof totals]).currentLevel
+      const oldLevel = getLevelProgress(totals[exerciseType] || 0).currentLevel
 
       const {
         data: { user },
@@ -68,7 +72,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username }: Push
       if (error) throw error
 
       // Update local state
-      const newTotal = totals[exerciseType as keyof typeof totals] + count
+      const newTotal = (totals[exerciseType] || 0) + count
       setTotals({ ...totals, [exerciseType]: newTotal })
       setWorkouts([newWorkout, ...workouts])
 
@@ -92,7 +96,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username }: Push
     router.refresh()
   }
 
-  const currentTotal = totals[activeExercise]
+  const currentTotal = totals[activeExercise] || 0
   const levelData = useMemo(() => getLevelProgress(currentTotal), [currentTotal])
   const pushupsForNextLevel = useMemo(() => getPushupsForNextLevel(levelData.currentLevel), [levelData.currentLevel])
 
@@ -110,17 +114,11 @@ export function PushupTracker({ initialWorkouts, initialTotals, username }: Push
   )
 
   const getExerciseName = (type: string) => {
-    switch (type) {
-      case "pushups":
-        return "Push-ups"
-      case "pullups":
-        return "Pull-ups"
-      case "squats":
-        return "Squats"
-      default:
-        return "Reps"
-    }
+    const exercise = exerciseTypes.find((e) => e.id === type)
+    return exercise?.display_name || "Reps"
   }
+
+  const currentExercise = exerciseTypes.find((e) => e.id === activeExercise)
 
   return (
     <main className="min-h-screen bg-background">
@@ -154,11 +152,17 @@ export function PushupTracker({ initialWorkouts, initialTotals, username }: Push
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Tabs value={activeExercise} onValueChange={(v) => setActiveExercise(v as any)} className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
-            <TabsTrigger value="pushups">Push-ups</TabsTrigger>
-            <TabsTrigger value="pullups">Pull-ups</TabsTrigger>
-            <TabsTrigger value="squats">Squats</TabsTrigger>
+        <Tabs value={activeExercise} onValueChange={setActiveExercise} className="mb-8">
+          <TabsList
+            className={`grid w-full mb-8`}
+            style={{ gridTemplateColumns: `repeat(${exerciseTypes.length}, minmax(0, 1fr))` }}
+          >
+            {exerciseTypes.map((exercise) => (
+              <TabsTrigger key={exercise.id} value={exercise.id}>
+                {exercise.icon && <span className="mr-1">{exercise.icon}</span>}
+                {exercise.display_name}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value={activeExercise} className="mt-0">
