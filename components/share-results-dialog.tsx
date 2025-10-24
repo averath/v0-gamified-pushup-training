@@ -27,10 +27,30 @@ export function ShareResultsDialog({
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    if (open && canvasRef.current) {
-      console.log("[v0] Generating share image...")
-      generateShareImage()
+    console.log("[v0] useEffect triggered, open:", open, "canvasRef.current:", !!canvasRef.current)
+
+    if (!open) {
+      console.log("[v0] Dialog not open, skipping")
+      return
     }
+
+    if (!canvasRef.current) {
+      console.log("[v0] Canvas ref not available yet, waiting...")
+      // Wait for next frame to ensure canvas is mounted
+      const timeoutId = setTimeout(() => {
+        console.log("[v0] Retry after timeout, canvasRef.current:", !!canvasRef.current)
+        if (canvasRef.current) {
+          generateShareImage()
+        } else {
+          console.log("[v0] Canvas still not available after timeout")
+          setError("Canvas element not found")
+        }
+      }, 100)
+      return () => clearTimeout(timeoutId)
+    }
+
+    console.log("[v0] Canvas available, generating image immediately")
+    generateShareImage()
   }, [open, username, exerciseName, totalReps, level])
 
   const drawRoundedRect = (
