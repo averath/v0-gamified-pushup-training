@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Target, TrendingUp, Zap, LogOut, Trophy } from "lucide-react"
+import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit } from "lucide-react"
 import { LevelBadge } from "@/components/level-badge"
 import { ProgressRing } from "@/components/progress-ring"
 import { AddPushupsDialog } from "@/components/add-workout-dialog"
@@ -10,6 +10,14 @@ import { WorkoutHistory } from "@/components/workout-history"
 import { StatsCard } from "@/components/stats-card"
 import { EditUsernameDialog } from "@/components/edit-username-dialog"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { getLevelProgress, getPushupsForNextLevel, getTotalPushupsForLevel } from "@/lib/level-system"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
@@ -47,6 +55,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
   const [isLoading, setIsLoading] = useState(false)
   const [activeExercise, setActiveExercise] = useState<string>(exerciseTypes[0]?.id || "pushups")
   const [currentUsername, setCurrentUsername] = useState(username)
+  const [showEditUsername, setShowEditUsername] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -130,13 +139,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
               <Zap className="w-6 h-6 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">LEVEL FITNESS</h1>
-              <div className="flex items-center gap-1">
-                <p className="text-sm text-muted-foreground">@{currentUsername}</p>
-                <EditUsernameDialog currentUsername={currentUsername} onUsernameUpdate={setCurrentUsername} />
-              </div>
-            </div>
+            <h1 className="text-2xl font-bold text-foreground">LVL UP</h1>
           </div>
           <div className="flex items-center gap-2">
             <ShareResultsDialog
@@ -152,12 +155,40 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
                 Leaderboard
               </Button>
             </Link>
-            <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground">
-              <LogOut className="w-5 h-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-muted-foreground">
+                  <User className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Account</span>
+                    <span className="text-xs text-muted-foreground">@{currentUsername}</span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowEditUsername(true)}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Rename Username
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
+
+      <EditUsernameDialog
+        currentUsername={currentUsername}
+        onUsernameUpdate={setCurrentUsername}
+        open={showEditUsername}
+        onOpenChange={setShowEditUsername}
+      />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Select Exercise Dropdown */}

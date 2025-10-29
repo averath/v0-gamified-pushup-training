@@ -192,17 +192,9 @@ export default function LeaderboardPage() {
               Back to {currentUserId ? "Dashboard" : "Home"}
             </Button>
           </Link>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <Trophy className="h-8 w-8 text-primary" />
-              <h1 className="text-4xl font-bold">Leaderboard</h1>
-            </div>
-            {currentUserId && (
-              <Button onClick={() => setShowAddDialog(true)} size="lg" className="gap-2">
-                <Plus className="h-5 w-5" />
-                Log Workout
-              </Button>
-            )}
+          <div className="flex items-center gap-3 mb-2">
+            <Trophy className="h-8 w-8 text-primary" />
+            <h1 className="text-4xl font-bold">Leaderboard</h1>
           </div>
           <p className="text-muted-foreground">Top training champions</p>
         </div>
@@ -255,13 +247,23 @@ export default function LeaderboardPage() {
         )}
       </div>
 
+      {/* Floating action button for logging workouts */}
       {currentUserId && (
-        <AddWorkoutDialog
-          open={showAddDialog}
-          onOpenChange={setShowAddDialog}
-          onWorkoutAdded={handleWorkoutAdded}
-          exerciseTypes={exerciseTypes}
-        />
+        <>
+          <Button
+            onClick={() => setShowAddDialog(true)}
+            size="lg"
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50 p-0"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+          <AddWorkoutDialog
+            open={showAddDialog}
+            onOpenChange={setShowAddDialog}
+            onWorkoutAdded={handleWorkoutAdded}
+            exerciseTypes={exerciseTypes}
+          />
+        </>
       )}
     </div>
   )

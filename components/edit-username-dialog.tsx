@@ -21,14 +21,24 @@ import { createClient } from "@/lib/supabase/client"
 interface EditUsernameDialogProps {
   currentUsername: string
   onUsernameUpdate: (newUsername: string) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function EditUsernameDialog({ currentUsername, onUsernameUpdate }: EditUsernameDialogProps) {
-  const [open, setOpen] = useState(false)
+export function EditUsernameDialog({
+  currentUsername,
+  onUsernameUpdate,
+  open: controlledOpen,
+  onOpenChange,
+}: EditUsernameDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
   const [username, setUsername] = useState(currentUsername)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const supabase = createClient()
+
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setOpen = onOpenChange || setInternalOpen
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,11 +101,13 @@ export function EditUsernameDialog({ currentUsername, onUsernameUpdate }: EditUs
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
-          <Pencil className="h-3 w-3" />
-        </Button>
-      </DialogTrigger>
+      {controlledOpen === undefined && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
+            <Pencil className="h-3 w-3" />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
