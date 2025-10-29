@@ -11,7 +11,7 @@ export function WorkoutHistory({ sessions, exerciseTypes = [] }: WorkoutHistoryP
   const getExerciseDisplay = (session: WorkoutSession) => {
     const exerciseType = exerciseTypes.find((e) => e.id === session.exercise_type)
     const isTimeBased = exerciseType?.measurement_type === "minutes"
-    const value = session.pushups
+    const value = session.value
 
     if (isTimeBased) {
       return {
@@ -79,7 +79,7 @@ export function WorkoutHistory({ sessions, exerciseTypes = [] }: WorkoutHistoryP
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-primary font-bold">{session.pushups}</span>
+                    <span className="text-primary font-bold">{session.value}</span>
                   </div>
                   <div>
                     <p className="font-medium">{display.text}</p>
