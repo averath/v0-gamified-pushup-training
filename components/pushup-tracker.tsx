@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit } from "lucide-react"
+import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus } from "lucide-react"
 import { LevelBadge } from "@/components/level-badge"
 import { ProgressRing } from "@/components/progress-ring"
-import { AddPushupsDialog } from "@/components/add-workout-dialog"
+import { AddWorkoutDialog } from "@/components/add-workout-dialog"
 import { LevelUpCelebration } from "@/components/level-up-celebration"
 import { WorkoutHistory } from "@/components/workout-history"
 import { StatsCard } from "@/components/stats-card"
@@ -56,6 +56,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
   const [activeExercise, setActiveExercise] = useState<string>(exerciseTypes[0]?.id || "pushups")
   const [currentUsername, setCurrentUsername] = useState(username)
   const [showEditUsername, setShowEditUsername] = useState(false)
+  const [showAddWorkout, setShowAddWorkout] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -246,9 +247,6 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
                   <span className="ml-2">{getExerciseName(activeExercise).toLowerCase()}</span>
                 </p>
               </div>
-
-              {/* Add Button */}
-              <AddPushupsDialog onAdd={handleAddPushups} disabled={isLoading} />
             </div>
           </div>
         </div>
@@ -273,6 +271,25 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
         {/* Workout History */}
         <WorkoutHistory sessions={sessions} />
       </div>
+
+      {/* Floating action button for logging workouts */}
+      <Button
+        size="lg"
+        className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-2xl z-40 hover:scale-110 transition-transform"
+        onClick={() => setShowAddWorkout(true)}
+        disabled={isLoading}
+      >
+        <Plus className="h-8 w-8" />
+      </Button>
+
+      {/* Controlled AddWorkoutDialog */}
+      <AddWorkoutDialog
+        open={showAddWorkout}
+        onOpenChange={setShowAddWorkout}
+        onAdd={handleAddPushups}
+        disabled={isLoading}
+        exerciseTypes={exerciseTypes}
+      />
 
       {/* Level Up Celebration */}
       <LevelUpCelebration newLevel={newLevel} open={showLevelUp} onClose={() => setShowLevelUp(false)} />
