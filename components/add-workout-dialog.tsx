@@ -19,6 +19,7 @@ interface ExerciseType {
   name: string
   display_name: string
   icon: string | null
+  measurement_type: "reps" | "minutes" // added measurement type
 }
 
 interface AddWorkoutDialogProps {
@@ -71,7 +72,15 @@ export function AddWorkoutDialog({
     }
   }, [propExerciseTypes])
 
-  const quickCounts = [5, 10, 20, 50]
+  const selectedExercise = exerciseTypes.find((e) => e.id === exerciseType)
+  const isTimeBased = selectedExercise?.measurement_type === "minutes"
+  const quickCounts = isTimeBased ? [5, 10, 15, 30] : [5, 10, 20, 50]
+
+  useEffect(() => {
+    if (selectedExercise) {
+      setCount(isTimeBased ? 10 : 10)
+    }
+  }, [exerciseType, isTimeBased])
 
   const handleAdd = () => {
     if (count > 0) {
@@ -86,8 +95,11 @@ export function AddWorkoutDialog({
     }
   }
 
-  const getExerciseName = () => {
+  const getUnitName = () => {
     const exercise = exerciseTypes.find((e) => e.id === exerciseType)
+    if (exercise?.measurement_type === "minutes") {
+      return count === 1 ? "Minute" : "Minutes"
+    }
     return exercise?.display_name || "Reps"
   }
 
@@ -95,7 +107,7 @@ export function AddWorkoutDialog({
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
         <DialogTitle className="text-2xl">Log Your Workout</DialogTitle>
-        <DialogDescription>Select exercise type and reps completed</DialogDescription>
+        <DialogDescription>Select exercise type and {isTimeBased ? "duration" : "reps"} completed</DialogDescription>
       </DialogHeader>
       <div className="flex flex-col gap-6 py-4">
         {!loading && exerciseTypes.length > 0 && (
@@ -157,7 +169,7 @@ export function AddWorkoutDialog({
 
         {/* Submit button */}
         <Button onClick={handleAdd} size="lg" className="w-full text-lg font-bold" disabled={disabled || loading}>
-          {disabled ? "Saving..." : `Add ${count} ${getExerciseName()}`}
+          {disabled ? "Saving..." : `Add ${count} ${getUnitName()}`}
         </Button>
       </div>
     </DialogContent>

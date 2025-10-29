@@ -4,19 +4,41 @@ import { Activity } from "lucide-react"
 
 interface WorkoutHistoryProps {
   sessions: WorkoutSession[]
+  exerciseTypes?: Array<{ id: string; display_name: string; measurement_type: string }> // added exercise types prop
 }
 
-export function WorkoutHistory({ sessions }: WorkoutHistoryProps) {
-  const getExerciseName = (type?: string) => {
-    switch (type) {
+export function WorkoutHistory({ sessions, exerciseTypes = [] }: WorkoutHistoryProps) {
+  const getExerciseDisplay = (session: WorkoutSession) => {
+    const exerciseType = exerciseTypes.find((e) => e.id === session.exercise_type)
+    const isTimeBased = exerciseType?.measurement_type === "minutes"
+    const value = session.pushups
+
+    if (isTimeBased) {
+      return {
+        text: `${value} minute${value !== 1 ? "s" : ""}`,
+        name: exerciseType?.display_name || "Workout",
+      }
+    }
+
+    // For rep-based exercises
+    let name = "rep"
+    switch (session.exercise_type) {
       case "pushups":
-        return "push-up"
+        name = "push-up"
+        break
       case "pullups":
-        return "pull-up"
+        name = "pull-up"
+        break
       case "squats":
-        return "squat"
+        name = "squat"
+        break
       default:
-        return "rep"
+        name = exerciseType?.display_name?.toLowerCase() || "rep"
+    }
+
+    return {
+      text: `${value} ${name}${value !== 1 ? "s" : ""}`,
+      name: exerciseType?.display_name || "Workout",
     }
   }
 
@@ -30,7 +52,7 @@ export function WorkoutHistory({ sessions }: WorkoutHistoryProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-center py-8">No workouts yet. Start logging your push-ups!</p>
+          <p className="text-muted-foreground text-center py-8">No workouts yet. Start logging your workouts!</p>
         </CardContent>
       </Card>
     )
@@ -49,7 +71,7 @@ export function WorkoutHistory({ sessions }: WorkoutHistoryProps) {
       <CardContent>
         <div className="space-y-2">
           {recentSessions.map((session) => {
-            const exerciseName = getExerciseName(session.exercise_type)
+            const display = getExerciseDisplay(session)
             return (
               <div
                 key={session.id}
@@ -60,10 +82,7 @@ export function WorkoutHistory({ sessions }: WorkoutHistoryProps) {
                     <span className="text-primary font-bold">{session.pushups}</span>
                   </div>
                   <div>
-                    <p className="font-medium">
-                      {session.pushups} {exerciseName}
-                      {session.pushups !== 1 ? "s" : ""}
-                    </p>
+                    <p className="font-medium">{display.text}</p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(session.timestamp).toLocaleDateString()} at{" "}
                       {new Date(session.timestamp).toLocaleTimeString([], {

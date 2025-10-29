@@ -1,6 +1,6 @@
 export interface WorkoutSession {
   id: string
-  pushups: number
+  pushups: number // keeping for backward compatibility, represents value
   timestamp: number
   exercise_type?: string
 }
