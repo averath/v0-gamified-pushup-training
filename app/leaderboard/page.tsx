@@ -2,12 +2,13 @@
 
 import { createClient } from "@/lib/supabase/client"
 import { calculateLevel } from "@/lib/level-system"
-import { Trophy, Medal, Award, ArrowLeft, Loader2 } from "lucide-react"
+import { Trophy, Medal, Award, ArrowLeft, Loader2, Plus } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AddWorkoutDialog } from "@/components/add-workout-dialog"
 
 interface LeaderboardEntry {
   id: string
@@ -31,6 +32,7 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([])
   const [exerciseTypesLoading, setExerciseTypesLoading] = useState(true)
+  const [showAddDialog, setShowAddDialog] = useState(false)
 
   const supabase = createClient()
 
@@ -85,6 +87,31 @@ export default function LeaderboardPage() {
 
     fetchLeaderboard(activeTab)
   }, [activeTab])
+
+  const handleWorkoutAdded = async () => {
+    if (!activeTab) return
+
+    // Invalidate the current tab's data to force a refresh
+    setLeaderboardData((prev) => ({
+      ...prev,
+      [activeTab]: null,
+    }))
+
+    // Refetch the current tab's data
+    setLoading((prev) => ({ ...prev, [activeTab]: true }))
+    const { data } = await supabase
+      .from("leaderboard_stats")
+      .select("*")
+      .eq("exercise_type", activeTab)
+      .order("total_reps", { ascending: false })
+      .limit(100)
+
+    setLeaderboardData((prev) => ({
+      ...prev,
+      [activeTab]: (data || []) as LeaderboardEntry[],
+    }))
+    setLoading((prev) => ({ ...prev, [activeTab]: false }))
+  }
 
   const renderLeaderboard = (data: LeaderboardEntry[] | null, exerciseName: string, exerciseType: string) => {
     if (loading[exerciseType]) {
@@ -165,9 +192,17 @@ export default function LeaderboardPage() {
               Back to {currentUserId ? "Dashboard" : "Home"}
             </Button>
           </Link>
-          <div className="flex items-center gap-3 mb-2">
-            <Trophy className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold">Leaderboard</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <Trophy className="h-8 w-8 text-primary" />
+              <h1 className="text-4xl font-bold">Leaderboard</h1>
+            </div>
+            {currentUserId && (
+              <Button onClick={() => setShowAddDialog(true)} size="lg" className="gap-2">
+                <Plus className="h-5 w-5" />
+                Log Workout
+              </Button>
+            )}
           </div>
           <p className="text-muted-foreground">Top training champions</p>
         </div>
@@ -219,6 +254,15 @@ export default function LeaderboardPage() {
           )
         )}
       </div>
+
+      {currentUserId && (
+        <AddWorkoutDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onWorkoutAdded={handleWorkoutAdded}
+          exerciseTypes={exerciseTypes}
+        />
+      )}
     </div>
   )
 }
