@@ -43,7 +43,7 @@ export default function DashboardPage() {
             .eq("user_id", user.id)
             .order("created_at", { ascending: false })
             .limit(10),
-          supabase.from("workouts").select("pushups, exercise_type").eq("user_id", user.id),
+          supabase.from("workouts").select("value, exercise_type").eq("user_id", user.id),
           supabase.from("exercise_types").select("*").order("created_at", { ascending: true }),
         ])
 
@@ -63,7 +63,7 @@ export default function DashboardPage() {
         allWorkouts?.forEach((w) => {
           const type = w.exercise_type || "pushups"
           if (totals[type] !== undefined) {
-            totals[type] += w.pushups
+            totals[type] += w.value
           }
         })
 
