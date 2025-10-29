@@ -35,7 +35,7 @@ interface ExerciseType {
 interface Workout {
   id: string
   user_id: string
-  pushups: number
+  value: number
   created_at: string
   exercise_type?: string
 }
@@ -74,7 +74,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
         .from("workouts")
         .insert({
           user_id: user.id,
-          pushups: count,
+          value: count,
           exercise_type: exerciseType,
         })
         .select()
@@ -117,7 +117,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
         .filter((w) => (w.exercise_type || "pushups") === activeExercise)
         .map((w) => ({
           id: w.id,
-          pushups: w.value,
+          value: w.value,
           timestamp: new Date(w.created_at).getTime(),
           exercise_type: w.exercise_type || "pushups",
         })),
