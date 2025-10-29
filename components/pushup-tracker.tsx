@@ -117,7 +117,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
         .filter((w) => (w.exercise_type || "pushups") === activeExercise)
         .map((w) => ({
           id: w.id,
-          pushups: w.pushups,
+          pushups: w.value,
           timestamp: new Date(w.created_at).getTime(),
           exercise_type: w.exercise_type || "pushups",
         })),
