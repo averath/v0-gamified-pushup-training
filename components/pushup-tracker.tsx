@@ -247,6 +247,11 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
                   <span className="ml-2">{getExerciseName(activeExercise).toLowerCase()}</span>
                 </p>
               </div>
+
+              <Button size="lg" className="mt-4 gap-2" onClick={() => setShowAddWorkout(true)} disabled={isLoading}>
+                <Plus className="h-5 w-5" />
+                Log Workout
+              </Button>
             </div>
           </div>
         </div>
@@ -271,16 +276,6 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
         {/* Workout History */}
         <WorkoutHistory sessions={sessions} />
       </div>
-
-      {/* Floating action button for logging workouts */}
-      <Button
-        size="lg"
-        className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-2xl z-40 hover:scale-110 transition-transform"
-        onClick={() => setShowAddWorkout(true)}
-        disabled={isLoading}
-      >
-        <Plus className="h-8 w-8" />
-      </Button>
 
       {/* Controlled AddWorkoutDialog */}
       <AddWorkoutDialog
