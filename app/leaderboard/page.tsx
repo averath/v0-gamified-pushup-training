@@ -113,6 +113,44 @@ export default function LeaderboardPage() {
     setLoading((prev) => ({ ...prev, [activeTab]: false }))
   }
 
+  const handleAddWorkout = async (count: number, exerciseType: string) => {
+    console.log("[v0] Adding workout:", count, exerciseType)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        console.error("[v0] User not authenticated")
+        throw new Error("Not authenticated")
+      }
+
+      console.log("[v0] Inserting workout for user:", user.id)
+      const { data: newWorkout, error } = await supabase
+        .from("workouts")
+        .insert({
+          user_id: user.id,
+          value: count,
+          exercise_type: exerciseType,
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error("[v0] Error inserting workout:", error)
+        throw error
+      }
+
+      console.log("[v0] Workout added successfully:", newWorkout)
+
+      // Refresh the leaderboard after adding workout
+      await handleWorkoutAdded()
+    } catch (error) {
+      console.error("[v0] Error adding workout:", error)
+      alert("Failed to add workout. Please try again.")
+    }
+  }
+
   const renderLeaderboard = (data: LeaderboardEntry[] | null, exerciseName: string, exerciseType: string) => {
     if (loading[exerciseType]) {
       return (
@@ -260,7 +298,7 @@ export default function LeaderboardPage() {
           <AddWorkoutDialog
             open={showAddDialog}
             onOpenChange={setShowAddDialog}
-            onWorkoutAdded={handleWorkoutAdded}
+            onAdd={handleAddWorkout}
             exerciseTypes={exerciseTypes}
           />
         </>
