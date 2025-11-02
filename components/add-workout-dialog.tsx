@@ -29,6 +29,7 @@ interface AddWorkoutDialogProps {
   onWorkoutAdded?: () => void
   disabled?: boolean
   exerciseTypes?: ExerciseType[]
+  defaultExerciseType?: string
 }
 
 export function AddWorkoutDialog({
@@ -38,6 +39,7 @@ export function AddWorkoutDialog({
   onWorkoutAdded,
   disabled,
   exerciseTypes: propExerciseTypes,
+  defaultExerciseType,
 }: AddWorkoutDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const [count, setCount] = useState(10)
@@ -54,7 +56,7 @@ export function AddWorkoutDialog({
   useEffect(() => {
     if (propExerciseTypes && propExerciseTypes.length > 0) {
       setExerciseTypes(propExerciseTypes)
-      setExerciseType(propExerciseTypes[0].id)
+      setExerciseType(defaultExerciseType || propExerciseTypes[0].id)
       setLoading(false)
     } else {
       async function fetchExerciseTypes() {
@@ -63,14 +65,14 @@ export function AddWorkoutDialog({
         if (data) {
           setExerciseTypes(data)
           if (data.length > 0) {
-            setExerciseType(data[0].id)
+            setExerciseType(defaultExerciseType || data[0].id)
           }
         }
         setLoading(false)
       }
       fetchExerciseTypes()
     }
-  }, [propExerciseTypes])
+  }, [propExerciseTypes, defaultExerciseType])
 
   const selectedExercise = exerciseTypes.find((e) => e.id === exerciseType)
   const isTimeBased = selectedExercise?.measurement_type === "minutes"

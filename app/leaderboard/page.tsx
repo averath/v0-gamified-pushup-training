@@ -300,6 +300,7 @@ export default function LeaderboardPage() {
             onOpenChange={setShowAddDialog}
             onAdd={handleAddWorkout}
             exerciseTypes={exerciseTypes}
+            defaultExerciseType={activeTab}
           />
         </>
       )}

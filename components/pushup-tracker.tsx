@@ -284,6 +284,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
         onAdd={handleAddPushups}
         disabled={isLoading}
         exerciseTypes={exerciseTypes}
+        defaultExerciseType={activeExercise}
       />
 
       {/* Level Up Celebration */}
