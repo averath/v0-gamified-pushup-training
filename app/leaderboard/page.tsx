@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
+import { useSelectedExercise } from "@/hooks/use-selected-exercise"
 
 interface LeaderboardEntry {
   id: string
@@ -26,7 +27,6 @@ interface ExerciseType {
 }
 
 export default function LeaderboardPage() {
-  const [activeTab, setActiveTab] = useState<string>("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [leaderboardData, setLeaderboardData] = useState<Record<string, LeaderboardEntry[] | null>>({})
   const [loading, setLoading] = useState<Record<string, boolean>>({})
@@ -36,18 +36,19 @@ export default function LeaderboardPage() {
 
   const supabase = createClient()
 
+  const [activeTab, setActiveTab] = useSelectedExercise(exerciseTypes)
+
   useEffect(() => {
     async function fetchExerciseTypes() {
       const { data } = await supabase.from("exercise_types").select("*").order("created_at", { ascending: true })
 
       if (data && data.length > 0) {
         setExerciseTypes(data)
-        setActiveTab(data[0].id)
 
         // Initialize loading states
         const initialLoading: Record<string, boolean> = {}
         data.forEach((type) => {
-          initialLoading[type.id] = type.id === data[0].id
+          initialLoading[type.id] = type.id === activeTab
         })
         setLoading(initialLoading)
       }

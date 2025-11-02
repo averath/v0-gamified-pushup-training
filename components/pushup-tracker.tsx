@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ShareResultsDialog } from "@/components/share-results-dialog"
+import { useSelectedExercise } from "@/hooks/use-selected-exercise"
 
 interface ExerciseType {
   id: string
@@ -53,12 +54,13 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
   const [showLevelUp, setShowLevelUp] = useState(false)
   const [newLevel, setNewLevel] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
-  const [activeExercise, setActiveExercise] = useState<string>(exerciseTypes[0]?.id || "pushups")
   const [currentUsername, setCurrentUsername] = useState(username)
   const [showEditUsername, setShowEditUsername] = useState(false)
   const [showAddWorkout, setShowAddWorkout] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  const [activeExercise, setActiveExercise] = useSelectedExercise(exerciseTypes)
 
   const handleAddPushups = async (count: number, exerciseType: string) => {
     setIsLoading(true)
