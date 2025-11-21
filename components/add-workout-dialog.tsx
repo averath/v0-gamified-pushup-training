@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Minus } from "lucide-react"
+import { Plus, Minus } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,7 +19,7 @@ interface ExerciseType {
   name: string
   display_name: string
   icon: string | null
-  measurement_type: "reps" | "minutes" // added measurement type
+  measurement_type: "reps" | "minutes" | "seconds" // added seconds support
 }
 
 interface AddWorkoutDialogProps {
@@ -75,8 +75,13 @@ export function AddWorkoutDialog({
   }, [propExerciseTypes, defaultExerciseType])
 
   const selectedExercise = exerciseTypes.find((e) => e.id === exerciseType)
-  const isTimeBased = selectedExercise?.measurement_type === "minutes"
-  const quickCounts = isTimeBased ? [5, 10, 15, 30] : [5, 10, 20, 50]
+  const isTimeBased = selectedExercise?.measurement_type === "minutes" || selectedExercise?.measurement_type === "seconds"
+  const quickCounts = 
+    selectedExercise?.measurement_type === "seconds" 
+      ? [15, 30, 45, 60] 
+      : isTimeBased 
+      ? [5, 10, 15, 30] 
+      : [5, 10, 20, 50]
 
   useEffect(() => {
     if (selectedExercise) {
@@ -99,6 +104,9 @@ export function AddWorkoutDialog({
 
   const getUnitName = () => {
     const exercise = exerciseTypes.find((e) => e.id === exerciseType)
+    if (exercise?.measurement_type === "seconds") {
+      return count === 1 ? "Second" : "Seconds" // added seconds unit display
+    }
     if (exercise?.measurement_type === "minutes") {
       return count === 1 ? "Minute" : "Minutes"
     }
