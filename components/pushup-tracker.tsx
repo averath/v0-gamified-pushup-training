@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus } from "lucide-react"
 import { LevelBadge } from "@/components/level-badge"
-import { ProgressRing } from "@/components/progress-ring"
+import { ProgressBar } from "@/components/progress-bar"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
 import { LevelUpCelebration } from "@/components/level-up-celebration"
 import { WorkoutHistory } from "@/components/workout-history"
@@ -223,31 +223,40 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
         <div className="mb-8">
           <div className="relative flex flex-col items-center justify-center py-12 px-6 rounded-2xl bg-gradient-to-br from-card via-card to-primary/5 border border-border">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl" />
-            <div className="relative z-10 flex flex-col items-center gap-6">
-              <div className="text-center">
-                <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-                  Current Level
-                </p>
-                <LevelBadge level={levelData.currentLevel} size="lg" />
-              </div>
-
-              {/* Progress Ring */}
-              <div className="relative">
-                <ProgressRing progress={levelData.progressPercentage} size={240} strokeWidth={16} />
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-5xl font-bold text-foreground">{Math.round(levelData.progressPercentage)}%</p>
-                  <p className="text-sm text-muted-foreground mt-1">to Level {levelData.nextLevel}</p>
+            <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-md">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-3">
+                  <LevelBadge level={levelData.currentLevel} size="lg" />
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                      Current Level
+                    </p>
+                    <p className="text-lg font-bold text-foreground">Level {levelData.currentLevel}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Next Level</p>
+                  <p className="text-lg font-bold text-accent">Level {levelData.nextLevel}</p>
                 </div>
               </div>
 
-              {/* Progress Text */}
-              <div className="text-center">
-                <p className="text-lg text-muted-foreground">
-                  <span className="text-accent font-bold text-2xl">{levelData.progressInLevel}</span>
-                  <span className="mx-2">/</span>
-                  <span className="font-semibold">{pushupsForNextLevel}</span>
-                  <span className="ml-2">{getExerciseName(activeExercise).toLowerCase()}</span>
-                </p>
+              <div className="w-full space-y-2">
+                <ProgressBar progress={levelData.progressPercentage} />
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">
+                    <span className="text-accent font-bold">{levelData.progressInLevel}</span>
+                    <span className="mx-1">/</span>
+                    <span>{pushupsForNextLevel}</span>
+                    <span className="ml-1">{getExerciseName(activeExercise).toLowerCase()}</span>
+                  </span>
+                  <span className="text-foreground font-bold">{Math.round(levelData.progressPercentage)}% XP</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 px-4 py-2 bg-background/50 rounded-lg border border-border">
+                <Zap className="w-5 h-5 text-accent" />
+                <span className="text-sm text-muted-foreground">Total XP:</span>
+                <span className="text-lg font-bold text-foreground">{currentTotal.toLocaleString()}</span>
               </div>
 
               <Button size="lg" className="mt-4 gap-2" onClick={() => setShowAddWorkout(true)} disabled={isLoading}>
