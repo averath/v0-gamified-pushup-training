@@ -53,3 +53,21 @@ export function getLevelProgress(totalPushups: number): {
     pushupsNeededForNextLevel,
   }
 }
+
+// Helper functions for leaderboard
+// Calculate progress percentage to next level
+export function calculateProgress(totalReps: number): number {
+  const { progressPercentage } = getLevelProgress(totalReps)
+  return progressPercentage
+}
+
+// Get XP earned within current level
+export function getXPForCurrentLevel(totalReps: number): number {
+  const { progressInLevel } = getLevelProgress(totalReps)
+  return progressInLevel
+}
+
+// Get total XP required for a specific level
+export function getXPRequiredForLevel(level: number): number {
+  return getTotalPushupsForLevel(level)
+}
