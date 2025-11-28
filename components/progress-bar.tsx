@@ -1,19 +1,22 @@
+import { getLevelTier } from "@/lib/level-system"
+
 interface ProgressBarProps {
   progress: number
   showSegments?: boolean
   segmentCount?: number
+  level?: number
 }
 
-export function ProgressBar({ progress, showSegments = true, segmentCount = 20 }: ProgressBarProps) {
+export function ProgressBar({ progress, showSegments = true, segmentCount = 20, level = 1 }: ProgressBarProps) {
   const filledSegments = Math.floor((progress / 100) * segmentCount)
+  const tier = getLevelTier(level)
 
   return (
     <div className="w-full">
       {/* XP Bar Container */}
       <div className="relative h-8 bg-background/80 rounded-lg border-2 border-border overflow-hidden shadow-inner">
-        {/* Animated fill */}
         <div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-accent to-primary transition-all duration-500 ease-out"
+          className={`absolute inset-y-0 left-0 bg-gradient-to-r ${tier.color} transition-all duration-500 ease-out`}
           style={{ width: `${progress}%` }}
         >
           {/* Shine effect */}

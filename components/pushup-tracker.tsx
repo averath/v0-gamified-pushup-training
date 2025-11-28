@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { getLevelProgress, getPushupsForNextLevel, getTotalPushupsForLevel } from "@/lib/level-system"
+import { getLevelProgress, getPushupsForNextLevel, getTotalPushupsForLevel, getTierIcon } from "@/lib/level-system"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -224,14 +224,20 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
           <div className="relative flex flex-col items-center justify-center py-12 px-6 rounded-2xl bg-gradient-to-br from-card via-card to-primary/5 border border-border">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl" />
             <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-md">
+              <div className="flex flex-col items-center gap-2 mb-2">
+                <LevelBadge level={levelData.currentLevel} size="lg" showTier />
+              </div>
+
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-3">
-                  <LevelBadge level={levelData.currentLevel} size="lg" />
                   <div className="text-left">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                       Current Level
                     </p>
-                    <p className="text-lg font-bold text-foreground">Level {levelData.currentLevel}</p>
+                    <p className="text-lg font-bold text-foreground flex items-center gap-2">
+                      Level {levelData.currentLevel}
+                      <span className="text-xl">{getTierIcon(levelData.tier.name)}</span>
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -241,17 +247,28 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
               </div>
 
               <div className="w-full space-y-2">
-                <ProgressBar progress={levelData.progressPercentage} />
+                <ProgressBar progress={levelData.progressPercentage} level={levelData.currentLevel} />
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">
                     <span className="text-accent font-bold">{levelData.progressInLevel}</span>
                     <span className="mx-1">/</span>
-                    <span>{pushupsForNextLevel}</span>
-                    <span className="ml-1">{getExerciseName(activeExercise).toLowerCase()}</span>
+                    <span>{levelData.xpForNextLevel}</span>
+                    <span className="ml-1">XP</span>
                   </span>
-                  <span className="text-foreground font-bold">{Math.round(levelData.progressPercentage)}% XP</span>
+                  <span className="text-foreground font-bold">{Math.round(levelData.progressPercentage)}%</span>
                 </div>
               </div>
+
+              {!levelData.isMilestoneLevel && (
+                <div className="text-xs text-muted-foreground">
+                  Next milestone: <span className="text-accent font-semibold">Level {levelData.nextMilestone}</span>
+                </div>
+              )}
+              {levelData.isMilestoneLevel && (
+                <div className="px-3 py-1 bg-yellow-500/20 rounded-full text-yellow-500 text-xs font-bold uppercase tracking-wider animate-pulse">
+                  Milestone Level
+                </div>
+              )}
 
               <div className="flex items-center gap-2 px-4 py-2 bg-background/50 rounded-lg border border-border">
                 <Zap className="w-5 h-5 text-accent" />
