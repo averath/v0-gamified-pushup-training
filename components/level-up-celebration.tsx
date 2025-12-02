@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Trophy, Sparkles, Star } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getLevelTier, getTierIcon, isMilestone, getNextMilestone } from "@/lib/level-system"
@@ -11,8 +11,22 @@ interface LevelUpCelebrationProps {
   onClose: () => void
 }
 
+const SCREAM_TIMESTAMPS = [
+  { start: 0, duration: 1.5 },
+  { start: 2, duration: 1.8 },
+  { start: 4.5, duration: 1.5 },
+  { start: 7, duration: 2 },
+  { start: 10, duration: 1.5 },
+  { start: 12.5, duration: 2 },
+  { start: 15, duration: 1.8 },
+  { start: 18, duration: 1.5 },
+  { start: 20.5, duration: 2 },
+  { start: 23, duration: 1.5 },
+]
+
 export function LevelUpCelebration({ newLevel, open, onClose }: LevelUpCelebrationProps) {
   const [show, setShow] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const tier = getLevelTier(newLevel)
   const tierIcon = getTierIcon(tier.name)
   const milestone = isMilestone(newLevel)
@@ -21,6 +35,25 @@ export function LevelUpCelebration({ newLevel, open, onClose }: LevelUpCelebrati
   useEffect(() => {
     if (open) {
       setShow(true)
+
+      // Play random scream
+      const randomScream = SCREAM_TIMESTAMPS[Math.floor(Math.random() * SCREAM_TIMESTAMPS.length)]
+      const audio = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/wojfer87%20kompilacja%20okrzyko%CC%81w-MUHJehV7sgT32o14yUER1rABDXGQUq.mp3")
+      audioRef.current = audio
+      audio.currentTime = randomScream.start
+      audio.volume = 0.7
+      audio.play().catch(() => {
+        // Ignore autoplay errors
+      })
+
+      // Stop audio after scream duration
+      const audioTimer = setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.pause()
+          audioRef.current = null
+        }
+      }, randomScream.duration * 1000)
+
       const timer = setTimeout(
         () => {
           setShow(false)
@@ -28,7 +61,15 @@ export function LevelUpCelebration({ newLevel, open, onClose }: LevelUpCelebrati
         },
         milestone ? 5000 : 3000,
       )
-      return () => clearTimeout(timer)
+
+      return () => {
+        clearTimeout(timer)
+        clearTimeout(audioTimer)
+        if (audioRef.current) {
+          audioRef.current.pause()
+          audioRef.current = null
+        }
+      }
     }
   }, [open, onClose, milestone])
 
