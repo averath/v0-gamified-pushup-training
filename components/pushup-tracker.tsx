@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus } from "lucide-react"
+import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus, BarChart3 } from "lucide-react"
 import { LevelBadge } from "@/components/level-badge"
 import { ProgressBar } from "@/components/progress-bar"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
@@ -156,6 +156,12 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
               <Button variant="outline" size="sm" className="gap-2 bg-transparent">
                 <Trophy className="w-4 h-4" />
                 Leaderboard
+              </Button>
+            </Link>
+            <Link href="/stats">
+              <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+                <BarChart3 className="w-4 h-4" />
+                Stats
               </Button>
             </Link>
             <DropdownMenu>
