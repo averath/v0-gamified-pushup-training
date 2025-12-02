@@ -9,6 +9,7 @@ interface LevelUpCelebrationProps {
   newLevel: number
   open: boolean
   onClose: () => void
+  soundEnabled?: boolean // Added soundEnabled prop
 }
 
 const SCREAM_TIMESTAMPS = [
@@ -24,7 +25,7 @@ const SCREAM_TIMESTAMPS = [
   { start: 23, duration: 1.5 },
 ]
 
-export function LevelUpCelebration({ newLevel, open, onClose }: LevelUpCelebrationProps) {
+export function LevelUpCelebration({ newLevel, open, onClose, soundEnabled = true }: LevelUpCelebrationProps) {
   const [show, setShow] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const tier = getLevelTier(newLevel)
@@ -36,42 +37,59 @@ export function LevelUpCelebration({ newLevel, open, onClose }: LevelUpCelebrati
     if (open) {
       setShow(true)
 
-      // Play random scream
-      const randomScream = SCREAM_TIMESTAMPS[Math.floor(Math.random() * SCREAM_TIMESTAMPS.length)]
-      const audio = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/wojfer87%20kompilacja%20okrzyko%CC%81w-MUHJehV7sgT32o14yUER1rABDXGQUq.mp3")
-      audioRef.current = audio
-      audio.currentTime = randomScream.start
-      audio.volume = 0.7
-      audio.play().catch(() => {
-        // Ignore autoplay errors
-      })
+      if (soundEnabled) {
+        const randomScream = SCREAM_TIMESTAMPS[Math.floor(Math.random() * SCREAM_TIMESTAMPS.length)]
+        const audio = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/wojfer87%20kompilacja%20okrzyko%CC%81w-MUHJehV7sgT32o14yUER1rABDXGQUq.mp3")
+        audioRef.current = audio
+        audio.currentTime = randomScream.start
+        audio.volume = 0.7
+        audio.play().catch(() => {
+          // Ignore autoplay errors
+        })
 
-      // Stop audio after scream duration
-      const audioTimer = setTimeout(() => {
-        if (audioRef.current) {
-          audioRef.current.pause()
-          audioRef.current = null
+        // Stop audio after scream duration
+        const audioTimer = setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.pause()
+            audioRef.current = null
+          }
+        }, randomScream.duration * 1000)
+
+        // Cleanup audio timer
+        const cleanup = () => {
+          clearTimeout(audioTimer)
+          if (audioRef.current) {
+            audioRef.current.pause()
+            audioRef.current = null
+          }
         }
-      }, randomScream.duration * 1000)
 
-      const timer = setTimeout(
-        () => {
-          setShow(false)
-          onClose()
-        },
-        milestone ? 5000 : 3000,
-      )
+        const timer = setTimeout(
+          () => {
+            setShow(false)
+            onClose()
+          },
+          milestone ? 5000 : 3000,
+        )
 
-      return () => {
-        clearTimeout(timer)
-        clearTimeout(audioTimer)
-        if (audioRef.current) {
-          audioRef.current.pause()
-          audioRef.current = null
+        return () => {
+          clearTimeout(timer)
+          cleanup()
         }
+      } else {
+        // No sound - just show dialog with timer
+        const timer = setTimeout(
+          () => {
+            setShow(false)
+            onClose()
+          },
+          milestone ? 5000 : 3000,
+        )
+
+        return () => clearTimeout(timer)
       }
     }
-  }, [open, onClose, milestone])
+  }, [open, onClose, milestone, soundEnabled])
 
   return (
     <Dialog open={show} onOpenChange={setShow}>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus, BarChart3 } from "lucide-react"
+import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus, BarChart3, Volume2, VolumeX } from "lucide-react"
 import { LevelBadge } from "@/components/level-badge"
 import { ProgressBar } from "@/components/progress-bar"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
@@ -25,6 +25,7 @@ import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ShareResultsDialog } from "@/components/share-results-dialog"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
+import { useSoundSettings } from "@/hooks/use-sound-settings" // Import sound settings hook
 
 interface ExerciseType {
   id: string
@@ -61,6 +62,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
   const supabase = createClient()
 
   const [activeExercise, setActiveExercise] = useSelectedExercise(exerciseTypes)
+  const { soundEnabled, toggleSound } = useSoundSettings() // Add sound settings
 
   const handleAddPushups = async (count: number, exerciseType: string) => {
     setIsLoading(true)
@@ -182,6 +184,20 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
                   <Edit className="w-4 h-4 mr-2" />
                   Rename Username
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={toggleSound}>
+                  {soundEnabled ? (
+                    <>
+                      <Volume2 className="w-4 h-4 mr-2" />
+                      Sound: On
+                    </>
+                  ) : (
+                    <>
+                      <VolumeX className="w-4 h-4 mr-2" />
+                      Sound: Off
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
@@ -322,7 +338,12 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
       />
 
       {/* Level Up Celebration */}
-      <LevelUpCelebration newLevel={newLevel} open={showLevelUp} onClose={() => setShowLevelUp(false)} />
+      <LevelUpCelebration
+        newLevel={newLevel}
+        open={showLevelUp}
+        onClose={() => setShowLevelUp(false)}
+        soundEnabled={soundEnabled}
+      />
     </main>
   )
 }
