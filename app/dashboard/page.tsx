@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<{
     workouts: any[]
     totals: Record<string, number>
+    workoutCounts: Record<string, number>
     username: string
     exerciseTypes: ExerciseType[]
   } | null>(null)
@@ -56,20 +57,24 @@ export default function DashboardPage() {
         if (exerciseTypesError) throw exerciseTypesError
 
         const totals: Record<string, number> = {}
+        const workoutCounts: Record<string, number> = {}
         exerciseTypes?.forEach((type) => {
           totals[type.id] = 0
+          workoutCounts[type.id] = 0
         })
 
         allWorkouts?.forEach((w) => {
           const type = w.exercise_type || "pushups"
           if (totals[type] !== undefined) {
             totals[type] += w.value
+            workoutCounts[type] += 1
           }
         })
 
         setData({
           workouts: recentWorkouts || [],
           totals,
+          workoutCounts,
           username: profileResult.data?.username || user.email || "",
           exerciseTypes: exerciseTypes || [],
         })
@@ -112,6 +117,7 @@ export default function DashboardPage() {
     <PushupTracker
       initialWorkouts={data.workouts}
       initialTotals={data.totals}
+      initialWorkoutCounts={data.workoutCounts}
       username={data.username}
       exerciseTypes={data.exerciseTypes}
     />

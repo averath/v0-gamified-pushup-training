@@ -45,12 +45,20 @@ interface Workout {
 interface PushupTrackerProps {
   initialWorkouts: Workout[]
   initialTotals: Record<string, number>
+  initialWorkoutCounts: Record<string, number>
   username: string
   exerciseTypes: ExerciseType[]
 }
 
-export function PushupTracker({ initialWorkouts, initialTotals, username, exerciseTypes }: PushupTrackerProps) {
+export function PushupTracker({
+  initialWorkouts,
+  initialTotals,
+  initialWorkoutCounts,
+  username,
+  exerciseTypes,
+}: PushupTrackerProps) {
   const [totals, setTotals] = useState(initialTotals)
+  const [workoutCounts, setWorkoutCounts] = useState(initialWorkoutCounts)
   const [workouts, setWorkouts] = useState(initialWorkouts)
   const [showLevelUp, setShowLevelUp] = useState(false)
   const [newLevel, setNewLevel] = useState(0)
@@ -89,7 +97,8 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
       // Update local state
       const newTotal = (totals[exerciseType] || 0) + count
       setTotals({ ...totals, [exerciseType]: newTotal })
-      setWorkouts([newWorkout, ...workouts])
+      setWorkoutCounts({ ...workoutCounts, [exerciseType]: (workoutCounts[exerciseType] || 0) + 1 })
+      setWorkouts([newWorkout, ...workouts.slice(0, 9)]) // Keep only 10 recent
 
       // Check if leveled up
       const newLevelData = getLevelProgress(newTotal)
@@ -135,6 +144,8 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
 
   const currentExercise = exerciseTypes.find((e) => e.id === activeExercise)
 
+  const currentWorkoutCount = workoutCounts[activeExercise] || 0
+
   return (
     <main className="min-h-screen bg-background">
       {/* Header */}
@@ -152,7 +163,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
               exerciseName={getExerciseName(activeExercise)}
               totalReps={currentTotal}
               level={levelData.currentLevel}
-              workoutCount={sessions.length}
+              workoutCount={currentWorkoutCount}
             />
             <Link href="/leaderboard">
               <Button variant="outline" size="sm" className="gap-2 bg-transparent px-2 sm:px-3">
@@ -320,7 +331,7 @@ export function PushupTracker({ initialWorkouts, initialTotals, username, exerci
             icon={TrendingUp}
             description={`Next: ${getTotalPushupsForLevel(levelData.nextLevel).toLocaleString()} total`}
           />
-          <StatsCard title="Workouts" value={sessions.length} icon={Zap} description="Sessions logged" />
+          <StatsCard title="Workouts" value={currentWorkoutCount} icon={Zap} description="Sessions logged" />
         </div>
 
         {/* Workout History */}
