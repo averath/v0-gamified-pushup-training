@@ -9,6 +9,7 @@ import { LevelUpCelebration } from "@/components/level-up-celebration"
 import { WorkoutHistory } from "@/components/workout-history"
 import { StatsCard } from "@/components/stats-card"
 import { EditUsernameDialog } from "@/components/edit-username-dialog"
+import { QuestPanel } from "@/components/quest-panel"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -25,7 +26,7 @@ import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ShareResultsDialog } from "@/components/share-results-dialog"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
-import { useSoundSettings } from "@/hooks/use-sound-settings" // Import sound settings hook
+import { useSoundSettings } from "@/hooks/use-sound-settings"
 
 interface ExerciseType {
   id: string
@@ -48,6 +49,7 @@ interface PushupTrackerProps {
   initialWorkoutCounts: Record<string, number>
   username: string
   exerciseTypes: ExerciseType[]
+  allWorkouts: Workout[]
 }
 
 export function PushupTracker({
@@ -56,10 +58,12 @@ export function PushupTracker({
   initialWorkoutCounts,
   username,
   exerciseTypes,
+  allWorkouts: initialAllWorkouts,
 }: PushupTrackerProps) {
   const [totals, setTotals] = useState(initialTotals)
   const [workoutCounts, setWorkoutCounts] = useState(initialWorkoutCounts)
   const [workouts, setWorkouts] = useState(initialWorkouts)
+  const [allWorkouts, setAllWorkouts] = useState(initialAllWorkouts)
   const [showLevelUp, setShowLevelUp] = useState(false)
   const [newLevel, setNewLevel] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
@@ -70,7 +74,7 @@ export function PushupTracker({
   const supabase = createClient()
 
   const [activeExercise, setActiveExercise] = useSelectedExercise(exerciseTypes)
-  const { soundEnabled, toggleSound } = useSoundSettings() // Add sound settings
+  const { soundEnabled, toggleSound } = useSoundSettings()
 
   const handleAddPushups = async (count: number, exerciseType: string) => {
     setIsLoading(true)
@@ -94,13 +98,12 @@ export function PushupTracker({
 
       if (error) throw error
 
-      // Update local state
       const newTotal = (totals[exerciseType] || 0) + count
       setTotals({ ...totals, [exerciseType]: newTotal })
       setWorkoutCounts({ ...workoutCounts, [exerciseType]: (workoutCounts[exerciseType] || 0) + 1 })
-      setWorkouts([newWorkout, ...workouts.slice(0, 9)]) // Keep only 10 recent
+      setWorkouts([newWorkout, ...workouts.slice(0, 9)])
+      setAllWorkouts([newWorkout, ...allWorkouts])
 
-      // Check if leveled up
       const newLevelData = getLevelProgress(newTotal)
       if (newLevelData.currentLevel > oldLevel) {
         setNewLevel(newLevelData.currentLevel)
@@ -111,6 +114,45 @@ export function PushupTracker({
       alert("Failed to add workout. Please try again.")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleClaimQuestXP = async (questId: string, xpAmount: number) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      // Add quest XP as a special workout entry
+      const { data: newWorkout, error } = await supabase
+        .from("workouts")
+        .insert({
+          user_id: user.id,
+          value: xpAmount,
+          exercise_type: activeExercise,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      const oldLevel = getLevelProgress(totals[activeExercise] || 0).currentLevel
+      const newTotal = (totals[activeExercise] || 0) + xpAmount
+
+      setTotals({ ...totals, [activeExercise]: newTotal })
+      setWorkoutCounts({ ...workoutCounts, [activeExercise]: (workoutCounts[activeExercise] || 0) + 1 })
+      setWorkouts([newWorkout, ...workouts.slice(0, 9)])
+      setAllWorkouts([newWorkout, ...allWorkouts])
+
+      // Check for level up
+      const newLevelData = getLevelProgress(newTotal)
+      if (newLevelData.currentLevel > oldLevel) {
+        setNewLevel(newLevelData.currentLevel)
+        setShowLevelUp(true)
+      }
+    } catch (error) {
+      console.error("Error claiming quest XP:", error)
     }
   }
 
@@ -137,6 +179,17 @@ export function PushupTracker({
     [workouts, activeExercise],
   )
 
+  const questWorkouts = useMemo(
+    () =>
+      allWorkouts.map((w) => ({
+        id: w.id,
+        value: w.value,
+        timestamp: new Date(w.created_at).getTime(),
+        exercise_type: w.exercise_type || "pushups",
+      })),
+    [allWorkouts],
+  )
+
   const getExerciseName = (type: string) => {
     const exercise = exerciseTypes.find((e) => e.id === type)
     return exercise?.display_name || "Reps"
@@ -148,7 +201,6 @@ export function PushupTracker({
 
   return (
     <main className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -227,7 +279,6 @@ export function PushupTracker({
       />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Select Exercise Dropdown */}
         <div className="mb-8">
           <label className="text-sm font-medium text-muted-foreground mb-2 block">Select Exercise</label>
           <Select value={activeExercise} onValueChange={setActiveExercise}>
@@ -252,7 +303,6 @@ export function PushupTracker({
           </Select>
         </div>
 
-        {/* Main Level Display */}
         <div className="mb-8">
           <div className="relative flex flex-col items-center justify-center py-12 px-6 rounded-2xl bg-gradient-to-br from-card via-card to-primary/5 border border-border">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl" />
@@ -317,7 +367,15 @@ export function PushupTracker({
           </div>
         </div>
 
-        {/* Stats Grid */}
+        <div className="mb-8">
+          <QuestPanel
+            workouts={questWorkouts}
+            exerciseType={activeExercise}
+            exerciseName={getExerciseName(activeExercise)}
+            onClaimXP={handleClaimQuestXP}
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <StatsCard
             title={`Total ${getExerciseName(activeExercise)}`}
@@ -334,11 +392,9 @@ export function PushupTracker({
           <StatsCard title="Workouts" value={currentWorkoutCount} icon={Zap} description="Sessions logged" />
         </div>
 
-        {/* Workout History */}
         <WorkoutHistory sessions={sessions} />
       </div>
 
-      {/* Controlled AddWorkoutDialog */}
       <AddWorkoutDialog
         open={showAddWorkout}
         onOpenChange={setShowAddWorkout}
@@ -348,7 +404,6 @@ export function PushupTracker({
         defaultExerciseType={activeExercise}
       />
 
-      {/* Level Up Celebration */}
       <LevelUpCelebration
         newLevel={newLevel}
         open={showLevelUp}

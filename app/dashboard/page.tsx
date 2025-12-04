@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [data, setData] = useState<{
     workouts: any[]
+    allWorkouts: any[]
     totals: Record<string, number>
     workoutCounts: Record<string, number>
     username: string
@@ -36,7 +37,7 @@ export default function DashboardPage() {
           return
         }
 
-        const [profileResult, recentWorkoutsResult, totalsResult, exerciseTypesResult] = await Promise.all([
+        const [profileResult, recentWorkoutsResult, allWorkoutsResult, exerciseTypesResult] = await Promise.all([
           supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
           supabase
             .from("workouts")
@@ -44,16 +45,20 @@ export default function DashboardPage() {
             .eq("user_id", user.id)
             .order("created_at", { ascending: false })
             .limit(10),
-          supabase.from("workouts").select("value, exercise_type").eq("user_id", user.id),
+          supabase
+            .from("workouts")
+            .select("id, value, exercise_type, created_at")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false }),
           supabase.from("exercise_types").select("*").order("created_at", { ascending: true }),
         ])
 
         const { data: recentWorkouts, error: workoutsError } = recentWorkoutsResult
-        const { data: allWorkouts, error: totalsError } = totalsResult
+        const { data: allWorkouts, error: allWorkoutsError } = allWorkoutsResult
         const { data: exerciseTypes, error: exerciseTypesError } = exerciseTypesResult
 
         if (workoutsError) throw workoutsError
-        if (totalsError) throw totalsError
+        if (allWorkoutsError) throw allWorkoutsError
         if (exerciseTypesError) throw exerciseTypesError
 
         const totals: Record<string, number> = {}
@@ -73,6 +78,7 @@ export default function DashboardPage() {
 
         setData({
           workouts: recentWorkouts || [],
+          allWorkouts: allWorkouts || [],
           totals,
           workoutCounts,
           username: profileResult.data?.username || user.email || "",
@@ -120,6 +126,7 @@ export default function DashboardPage() {
       initialWorkoutCounts={data.workoutCounts}
       username={data.username}
       exerciseTypes={data.exerciseTypes}
+      allWorkouts={data.allWorkouts}
     />
   )
 }
