@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Minus } from "lucide-react"
+import { Plus, Minus } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/client"
-import { ExerciseAnimation } from "@/components/exercise-animation"
 
 interface ExerciseType {
   id: string
@@ -76,14 +75,13 @@ export function AddWorkoutDialog({
   }, [propExerciseTypes, defaultExerciseType])
 
   const selectedExercise = exerciseTypes.find((e) => e.id === exerciseType)
-  const isTimeBased =
-    selectedExercise?.measurement_type === "minutes" || selectedExercise?.measurement_type === "seconds"
-  const quickCounts =
-    selectedExercise?.measurement_type === "seconds"
-      ? [15, 30, 45, 60]
-      : isTimeBased
-        ? [5, 10, 15, 30]
-        : [5, 10, 20, 50]
+  const isTimeBased = selectedExercise?.measurement_type === "minutes" || selectedExercise?.measurement_type === "seconds"
+  const quickCounts = 
+    selectedExercise?.measurement_type === "seconds" 
+      ? [15, 30, 45, 60] 
+      : isTimeBased 
+      ? [5, 10, 15, 30] 
+      : [5, 10, 20, 50]
 
   useEffect(() => {
     if (selectedExercise) {
@@ -140,9 +138,6 @@ export function AddWorkoutDialog({
             </Select>
           </div>
         )}
-
-        {/* Exercise animation with form tips */}
-        <ExerciseAnimation exerciseType={exerciseType} />
 
         {/* Counter */}
         <div className="flex items-center justify-center gap-4">
