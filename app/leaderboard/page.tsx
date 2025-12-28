@@ -6,7 +6,7 @@ import { Trophy, Medal, Award, ArrowLeft, Loader2, Plus, Crown, Star, Zap, Flame
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ExerciseSelector } from "@/components/exercise-selector"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
 
@@ -407,32 +407,7 @@ export default function LeaderboardPage() {
         {/* Select Exercise Dropdown */}
         {!exerciseTypesLoading && (
           <div className="mb-6">
-            <label className="text-sm font-medium text-muted-foreground mb-2 block">Select Exercise</label>
-            <Select value={activeTab} onValueChange={setActiveTab}>
-              <SelectTrigger className="w-full max-w-xs bg-card border-2 border-border">
-                <SelectValue>
-                  {(() => {
-                    const current = exerciseTypes.find((e) => e.id === activeTab)
-                    return (
-                      <div className="flex items-center gap-2">
-                        {current?.icon && <span>{current.icon}</span>}
-                        <span className="font-semibold">{current?.display_name || "Select exercise"}</span>
-                      </div>
-                    )
-                  })()}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {exerciseTypes.map((exercise) => (
-                  <SelectItem key={exercise.id} value={exercise.id}>
-                    <div className="flex items-center gap-2">
-                      {exercise.icon && <span>{exercise.icon}</span>}
-                      <span>{exercise.display_name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ExerciseSelector exerciseTypes={exerciseTypes} value={activeTab} onValueChange={setActiveTab} />
           </div>
         )}
 

@@ -6,7 +6,7 @@ import { Loader2, TrendingUp, Calendar, Flame, Target, Award, ArrowLeft, BarChar
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { getLevelProgress, getLevelTier, getTierIcon, MILESTONES, calculateLevel } from "@/lib/level-system"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ExerciseSelector } from "@/components/exercise-selector"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
 
 interface Workout {
@@ -247,27 +247,7 @@ export default function StatsPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Exercise Selector */}
         <div className="mb-8">
-          <label className="text-sm font-medium text-muted-foreground mb-2 block">Select Exercise</label>
-          <Select value={activeExercise} onValueChange={setActiveExercise}>
-            <SelectTrigger className="w-full max-w-xs bg-card border-border">
-              <SelectValue>
-                <div className="flex items-center gap-2">
-                  {currentExercise?.icon && <span>{currentExercise.icon}</span>}
-                  <span>{currentExercise?.display_name || "Select exercise"}</span>
-                </div>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {exerciseTypes.map((exercise) => (
-                <SelectItem key={exercise.id} value={exercise.id}>
-                  <div className="flex items-center gap-2">
-                    {exercise.icon && <span>{exercise.icon}</span>}
-                    <span>{exercise.display_name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ExerciseSelector exerciseTypes={exerciseTypes} value={activeExercise} onValueChange={setActiveExercise} />
         </div>
 
         {/* Level Overview Card */}

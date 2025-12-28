@@ -23,7 +23,7 @@ import { getLevelProgress, getPushupsForNextLevel, getTotalPushupsForLevel, getT
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ExerciseSelector } from "@/components/exercise-selector"
 import { ShareResultsDialog } from "@/components/share-results-dialog"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
 import { useSoundSettings } from "@/hooks/use-sound-settings"
@@ -282,27 +282,7 @@ export function PushupTracker({
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
-          <label className="text-sm font-medium text-muted-foreground mb-2 block">Select Exercise</label>
-          <Select value={activeExercise} onValueChange={setActiveExercise}>
-            <SelectTrigger className="w-full max-w-xs bg-card border-border">
-              <SelectValue>
-                <div className="flex items-center gap-2">
-                  {currentExercise?.icon && <span>{currentExercise.icon}</span>}
-                  <span>{currentExercise?.display_name || "Select exercise"}</span>
-                </div>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {exerciseTypes.map((exercise) => (
-                <SelectItem key={exercise.id} value={exercise.id}>
-                  <div className="flex items-center gap-2">
-                    {exercise.icon && <span>{exercise.icon}</span>}
-                    <span>{exercise.display_name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ExerciseSelector exerciseTypes={exerciseTypes} value={activeExercise} onValueChange={setActiveExercise} />
         </div>
 
         <div className="mb-8">
