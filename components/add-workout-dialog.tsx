@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
 
 interface ExerciseType {
@@ -157,7 +158,23 @@ export function AddWorkoutDialog({
           >
             <Minus className="h-5 w-5" />
           </Button>
-          <div className="text-6xl font-bold text-primary min-w-[120px] text-center">{count}</div>
+          <div className="flex flex-col items-center gap-2">
+            {/* <div className="text-6xl font-bold text-primary min-w-[120px] text-center">{count}</div> */}
+            <Input
+              type="number"
+              min="1"
+              value={count}
+              onChange={(e) => {
+                const value = Number.parseInt(e.target.value)
+                if (!isNaN(value) && value > 0) {
+                  setCount(value)
+                }
+              }}
+              className="w-32 text-center text-sm h-12 number-input-no-spin"
+              placeholder="Enter value"
+              disabled={disabled}
+            />
+          </div>
           <Button
             variant="outline"
             size="icon"
