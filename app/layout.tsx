@@ -1,20 +1,21 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist } from "next/font/geist"
+import { Inter, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import { Suspense } from "react"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
 })
 
-const geistMono = Geist({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-mono",
+  display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -55,7 +56,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans ${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`font-sans ${inter.variable} ${jetbrainsMono.variable}`}>
         <Suspense fallback={<div>Loading...</div>}>
           {children}
           <Analytics />
