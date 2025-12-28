@@ -47,7 +47,7 @@ export default function DashboardPage() {
             .limit(10),
           supabase
             .from("workouts")
-            .select("id, value, exercise_type, created_at")
+            .select("id, value, exercise_type, created_at, is_quest_reward")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false }),
           supabase.from("exercise_types").select("*").order("created_at", { ascending: true }),
@@ -71,8 +71,12 @@ export default function DashboardPage() {
         allWorkouts?.forEach((w) => {
           const type = w.exercise_type || "pushups"
           if (totals[type] !== undefined) {
+            // All workouts contribute to XP total
             totals[type] += w.value
-            workoutCounts[type] += 1
+            // Only non-quest workouts count as actual workout sessions
+            if (!w.is_quest_reward) {
+              workoutCounts[type] += 1
+            }
           }
         })
 

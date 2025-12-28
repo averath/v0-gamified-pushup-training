@@ -41,6 +41,7 @@ interface Workout {
   value: number
   created_at: string
   exercise_type?: string
+  is_quest_reward?: boolean
 }
 
 interface PushupTrackerProps {
@@ -124,13 +125,13 @@ export function PushupTracker({
       } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
-      // Add quest XP as a special workout entry
       const { data: newWorkout, error } = await supabase
         .from("workouts")
         .insert({
           user_id: user.id,
           value: xpAmount,
           exercise_type: activeExercise,
+          is_quest_reward: true, // This is quest XP, not a workout session
         })
         .select()
         .single()
@@ -141,7 +142,7 @@ export function PushupTracker({
       const newTotal = (totals[activeExercise] || 0) + xpAmount
 
       setTotals({ ...totals, [activeExercise]: newTotal })
-      setWorkoutCounts({ ...workoutCounts, [activeExercise]: (workoutCounts[activeExercise] || 0) + 1 })
+      // setWorkoutCounts({ ...workoutCounts, [activeExercise]: (workoutCounts[activeExercise] || 0) + 1 })
       setWorkouts([newWorkout, ...workouts.slice(0, 9)])
       setAllWorkouts([newWorkout, ...allWorkouts])
 
@@ -169,7 +170,7 @@ export function PushupTracker({
   const sessions = useMemo(
     () =>
       workouts
-        .filter((w) => (w.exercise_type || "pushups") === activeExercise)
+        .filter((w) => (w.exercise_type || "pushups") === activeExercise && !w.is_quest_reward)
         .map((w) => ({
           id: w.id,
           value: w.value,
@@ -186,6 +187,7 @@ export function PushupTracker({
         value: w.value,
         timestamp: new Date(w.created_at).getTime(),
         exercise_type: w.exercise_type || "pushups",
+        is_quest_reward: w.is_quest_reward,
       })),
     [allWorkouts],
   )

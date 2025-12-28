@@ -13,6 +13,7 @@ interface Workout {
   value: number
   timestamp: number
   exercise_type: string
+  is_quest_reward?: boolean
 }
 
 interface QuestPanelProps {
@@ -84,8 +85,8 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, onClaimXP }: 
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
     const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime()
 
-    // Filter workouts for current exercise type
-    const exerciseWorkouts = workouts.filter((w) => w.exercise_type === exerciseType)
+    // Filter workouts for current exercise type and exclude quest rewards
+    const exerciseWorkouts = workouts.filter((w) => w.exercise_type === exerciseType && !w.is_quest_reward)
 
     // Daily stats
     const todayWorkouts = exerciseWorkouts.filter((w) => w.timestamp >= startOfDay)

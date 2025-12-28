@@ -1,11 +1,21 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
+import { Geist } from "next/font/geist"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import { Suspense } from "react"
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+})
+
+const geistMono = Geist({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+})
 
 export const metadata: Metadata = {
   title: "Pushup Track - Gamified Fitness Training",
@@ -45,7 +55,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+      <body className={`font-sans ${geistSans.variable} ${geistMono.variable}`}>
         <Suspense fallback={<div>Loading...</div>}>
           {children}
           <Analytics />

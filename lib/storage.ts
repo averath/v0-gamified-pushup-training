@@ -3,6 +3,7 @@ export interface WorkoutSession {
   pushups: number // keeping for backward compatibility, represents value
   timestamp: number
   exercise_type?: string
+  is_quest_reward?: boolean
 }
 
 export interface UserProgress {
@@ -34,13 +35,14 @@ export function saveProgress(progress: UserProgress): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
 }
 
-export function addWorkoutSession(pushups: number, exercise_type?: string): UserProgress {
+export function addWorkoutSession(pushups: number, exercise_type?: string, is_quest_reward?: boolean): UserProgress {
   const progress = loadProgress()
   const session: WorkoutSession = {
     id: Date.now().toString(),
     pushups,
     timestamp: Date.now(),
     exercise_type,
+    is_quest_reward,
   }
 
   progress.totalPushups += pushups
