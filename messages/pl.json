@@ -1,0 +1,128 @@
+{
+  "common": {
+    "loading": "Ładowanie...",
+    "error": "Błąd",
+    "success": "Sukces",
+    "cancel": "Anuluj",
+    "save": "Zapisz",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "close": "Zamknij",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "submit": "Wyślij"
+  },
+  "header": {
+    "title": "LVL UP",
+    "leaderboard": "Ranking",
+    "stats": "Statystyki",
+    "account": "Konto",
+    "logout": "Wyloguj",
+    "renameUsername": "Zmień nazwę użytkownika",
+    "soundOn": "Dźwięk: Włączony",
+    "soundOff": "Dźwięk: Wyłączony"
+  },
+  "dashboard": {
+    "logWorkout": "Dodaj trening",
+    "currentLevel": "Obecny poziom",
+    "nextLevel": "Następny poziom",
+    "totalXP": "Całkowite XP",
+    "nextMilestone": "Następny kamień milowy",
+    "milestoneLevel": "Poziom kamienny milowy",
+    "totalReps": "Całkowite {exercise}",
+    "allTime": "Cały czas",
+    "workouts": "Treningi",
+    "sessionsLogged": "Zapisane sesje"
+  },
+  "workout": {
+    "addWorkout": "Dodaj trening",
+    "selectExercise": "Wybierz ćwiczenie",
+    "enterAmount": "Wpisz ilość",
+    "reps": "Powtórzenia",
+    "minutes": "Minuty",
+    "seconds": "Sekundy",
+    "quickSelect": "Szybki wybór",
+    "logWorkout": "Zapisz trening",
+    "workoutAdded": "Trening dodany pomyślnie!"
+  },
+  "quests": {
+    "title": "Dzienne i tygodniowe zadania",
+    "daily": "Dzienne",
+    "weekly": "Tygodniowe",
+    "completed": "Ukończone",
+    "claim": "Odbierz",
+    "claimed": "Odebrane",
+    "dailyReps": "Wykonaj {amount} {exercise}",
+    "dailyWorkout": "Zapisz przynajmniej jeden trening",
+    "weeklyDays": "Trenuj przez {days} różnych dni",
+    "weeklyReps": "Wykonaj {amount} {exercise}"
+  },
+  "leaderboard": {
+    "title": "Sala Sław",
+    "rank": "Miejsce",
+    "player": "Gracz",
+    "level": "Poziom",
+    "xp": "XP",
+    "workouts": "Treningi",
+    "loading": "Ładowanie rankingu..."
+  },
+  "stats": {
+    "title": "Statystyki gracza",
+    "overview": "Przegląd",
+    "currentLevel": "Obecny poziom",
+    "totalXP": "Całkowite XP",
+    "totalWorkouts": "Wszystkie treningi",
+    "averagePerWorkout": "Średnia na trening",
+    "bestWorkout": "Najlepszy trening",
+    "currentStreak": "Obecna passa",
+    "longestStreak": "Najdłuższa passa",
+    "days": "dni",
+    "weeklyActivity": "Aktywność tygodniowa",
+    "last8Weeks": "Ostatnie 8 tygodni",
+    "milestones": "Osiągnięte kamienie milowe",
+    "activitySummary": "Podsumowanie aktywności",
+    "firstWorkout": "Pierwszy trening",
+    "lastWorkout": "Ostatni trening",
+    "totalDays": "Wszystkie aktywne dni"
+  },
+  "levelUp": {
+    "title": "Awans!",
+    "newLevel": "Poziom {level}",
+    "unlocked": "Odblokowane",
+    "keepGoing": "Tak trzymaj!",
+    "milestone": "Osiągnięcie kamienia milowego!"
+  },
+  "auth": {
+    "signIn": "Zaloguj się",
+    "signUp": "Zarejestruj się",
+    "email": "Email",
+    "password": "Hasło",
+    "username": "Nazwa użytkownika",
+    "forgotPassword": "Zapomniałeś hasła?",
+    "noAccount": "Nie masz konta?",
+    "hasAccount": "Masz już konto?",
+    "signUpSuccess": "Sprawdź email, aby potwierdzić konto"
+  },
+  "landing": {
+    "hero": {
+      "title": "Zamień fitness w grę",
+      "subtitle": "Śledź treningi, zdobywaj poziomy i rywalizuj z atletami na całym świecie",
+      "cta": "Rozpocznij trening"
+    },
+    "features": {
+      "tracking": "Inteligentne śledzenie",
+      "trackingDesc": "Zapisuj każde powtórzenie i obserwuj swój postęp",
+      "levels": "System poziomów",
+      "levelsDesc": "Zdobywaj XP i odblokowuj nowe rangi",
+      "compete": "Rywalizuj",
+      "competeDesc": "Wyzwij znajomych na tablicy wyników"
+    }
+  },
+  "share": {
+    "title": "Udostępnij swój postęp",
+    "shareOn": "Udostępnij na",
+    "copyLink": "Kopiuj link",
+    "linkCopied": "Link skopiowany do schowka!",
+    "downloadImage": "Pobierz obraz"
+  }
+}

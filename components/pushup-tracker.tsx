@@ -11,6 +11,7 @@ import { StatsCard } from "@/components/stats-card"
 import { EditUsernameDialog } from "@/components/edit-username-dialog"
 import { QuestPanel } from "@/components/quest-panel"
 import { Button } from "@/components/ui/button"
+import { useTranslations } from "next-intl"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,6 +74,7 @@ export function PushupTracker({
   const [showAddWorkout, setShowAddWorkout] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const t = useTranslations()
 
   const [activeExercise, setActiveExercise] = useSelectedExercise(exerciseTypes)
   const { soundEnabled, toggleSound } = useSoundSettings()
@@ -209,7 +211,7 @@ export function PushupTracker({
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary flex items-center justify-center">
               <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground hidden sm:block">LVL UP</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground hidden sm:block">{t("header.title")}</h1>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <ShareResultsDialog
@@ -222,13 +224,13 @@ export function PushupTracker({
             <Link href="/leaderboard">
               <Button variant="outline" size="sm" className="gap-2 bg-transparent px-2 sm:px-3">
                 <Trophy className="w-4 h-4" />
-                <span className="hidden sm:inline">Leaderboard</span>
+                <span className="hidden sm:inline">{t("header.leaderboard")}</span>
               </Button>
             </Link>
             <Link href="/stats">
               <Button variant="outline" size="sm" className="gap-2 bg-transparent px-2 sm:px-3">
                 <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">Stats</span>
+                <span className="hidden sm:inline">{t("header.stats")}</span>
               </Button>
             </Link>
             <DropdownMenu>
@@ -240,32 +242,32 @@ export function PushupTracker({
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium">Account</span>
+                    <span className="text-sm font-medium">{t("header.account")}</span>
                     <span className="text-xs text-muted-foreground">@{currentUsername}</span>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setShowEditUsername(true)}>
                   <Edit className="w-4 h-4 mr-2" />
-                  Rename Username
+                  {t("header.renameUsername")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={toggleSound}>
                   {soundEnabled ? (
                     <>
                       <Volume2 className="w-4 h-4 mr-2" />
-                      Sound: On
+                      {t("header.soundOn")}
                     </>
                   ) : (
                     <>
                       <VolumeX className="w-4 h-4 mr-2" />
-                      Sound: Off
+                      {t("header.soundOff")}
                     </>
                   )}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+                  {t("header.logout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -297,17 +299,21 @@ export function PushupTracker({
                 <div className="flex items-center gap-3">
                   <div className="text-left">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                      Current Level
+                      {t("dashboard.currentLevel")}
                     </p>
                     <p className="text-lg font-bold text-foreground flex items-center gap-2">
-                      Level {levelData.currentLevel}
+                      {t("dashboard.currentLevel")} {levelData.currentLevel}
                       <span className="text-xl">{getTierIcon(levelData.tier.name)}</span>
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Next Level</p>
-                  <p className="text-lg font-bold text-accent">Level {levelData.nextLevel}</p>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                    {t("dashboard.nextLevel")}
+                  </p>
+                  <p className="text-lg font-bold text-accent">
+                    {t("dashboard.currentLevel")} {levelData.nextLevel}
+                  </p>
                 </div>
               </div>
 
@@ -326,24 +332,27 @@ export function PushupTracker({
 
               {!levelData.isMilestoneLevel && (
                 <div className="text-xs text-muted-foreground">
-                  Next milestone: <span className="text-accent font-semibold">Level {levelData.nextMilestone}</span>
+                  {t("dashboard.nextMilestone")}:{" "}
+                  <span className="text-accent font-semibold">
+                    {t("dashboard.currentLevel")} {levelData.nextMilestone}
+                  </span>
                 </div>
               )}
               {levelData.isMilestoneLevel && (
                 <div className="px-3 py-1 bg-yellow-500/20 rounded-full text-yellow-500 text-xs font-bold uppercase tracking-wider animate-pulse">
-                  Milestone Level
+                  {t("dashboard.milestoneLevel")}
                 </div>
               )}
 
               <div className="flex items-center gap-2 px-4 py-2 bg-background/50 rounded-lg border border-border">
                 <Zap className="w-5 h-5 text-accent" />
-                <span className="text-sm text-muted-foreground">Total XP:</span>
+                <span className="text-sm text-muted-foreground">{t("dashboard.totalXP")}:</span>
                 <span className="text-lg font-bold text-foreground">{currentTotal.toLocaleString()}</span>
               </div>
 
               <Button size="lg" className="mt-4 gap-2" onClick={() => setShowAddWorkout(true)} disabled={isLoading}>
                 <Plus className="h-5 w-5" />
-                Log Workout
+                {t("dashboard.logWorkout")}
               </Button>
             </div>
           </div>
@@ -360,18 +369,23 @@ export function PushupTracker({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <StatsCard
-            title={`Total ${getExerciseName(activeExercise)}`}
+            title={t("dashboard.totalReps", { exercise: getExerciseName(activeExercise) })}
             value={currentTotal.toLocaleString()}
             icon={Target}
-            description="All time"
+            description={t("dashboard.allTime")}
           />
           <StatsCard
-            title="Current Level"
+            title={t("dashboard.currentLevel")}
             value={levelData.currentLevel}
             icon={TrendingUp}
-            description={`Next: ${getTotalPushupsForLevel(levelData.nextLevel).toLocaleString()} total`}
+            description={`${t("dashboard.nextLevel")}: ${getTotalPushupsForLevel(levelData.nextLevel).toLocaleString()} total`}
           />
-          <StatsCard title="Workouts" value={currentWorkoutCount} icon={Zap} description="Sessions logged" />
+          <StatsCard
+            title={t("dashboard.workouts")}
+            value={currentWorkoutCount}
+            icon={Zap}
+            description={t("dashboard.sessionsLogged")}
+          />
         </div>
 
         <WorkoutHistory sessions={sessions} />

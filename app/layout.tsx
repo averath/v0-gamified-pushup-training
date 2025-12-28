@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { NextIntlClientProvider } from "next-intl"
+import { getLocale } from "@/lib/i18n"
 import "./globals.css"
 import { Suspense } from "react"
 
@@ -49,19 +51,24 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const locale = await getLocale()
+  const messages = (await import(`@/messages/${locale}.json`)).default
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={`font-sans ${inter.variable} ${jetbrainsMono.variable}`}>
-        <Suspense fallback={<div>Loading...</div>}>
-          {children}
-          <Analytics />
-          <SpeedInsights />
-        </Suspense>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <Suspense fallback={<div>Loading...</div>}>
+            {children}
+            <Analytics />
+            <SpeedInsights />
+          </Suspense>
+        </NextIntlClientProvider>
       </body>
     </html>
   )
