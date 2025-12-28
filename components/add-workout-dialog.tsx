@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Minus } from 'lucide-react'
+import { Plus, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -54,6 +54,12 @@ export function AddWorkoutDialog({
   const supabase = createClient()
 
   useEffect(() => {
+    if (open && defaultExerciseType) {
+      setExerciseType(defaultExerciseType)
+    }
+  }, [open, defaultExerciseType])
+
+  useEffect(() => {
     if (propExerciseTypes && propExerciseTypes.length > 0) {
       setExerciseTypes(propExerciseTypes)
       setExerciseType(defaultExerciseType || propExerciseTypes[0].id)
@@ -75,13 +81,14 @@ export function AddWorkoutDialog({
   }, [propExerciseTypes, defaultExerciseType])
 
   const selectedExercise = exerciseTypes.find((e) => e.id === exerciseType)
-  const isTimeBased = selectedExercise?.measurement_type === "minutes" || selectedExercise?.measurement_type === "seconds"
-  const quickCounts = 
-    selectedExercise?.measurement_type === "seconds" 
-      ? [15, 30, 45, 60] 
-      : isTimeBased 
-      ? [5, 10, 15, 30] 
-      : [5, 10, 20, 50]
+  const isTimeBased =
+    selectedExercise?.measurement_type === "minutes" || selectedExercise?.measurement_type === "seconds"
+  const quickCounts =
+    selectedExercise?.measurement_type === "seconds"
+      ? [15, 30, 45, 60]
+      : isTimeBased
+        ? [5, 10, 15, 30]
+        : [5, 10, 20, 50]
 
   useEffect(() => {
     if (selectedExercise) {
