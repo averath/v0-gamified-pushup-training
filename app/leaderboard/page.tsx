@@ -337,7 +337,7 @@ export default function LeaderboardPage() {
 
             {/* 1st place */}
             <div className="flex flex-col items-center">
-              <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 mb-2 animate-pulse">
+              <div className="w-20 h-20 rounded-xl bg-linear-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 mb-2 animate-pulse">
                 <Crown className="h-10 w-10 text-yellow-900" />
               </div>
               <p className="text-sm font-bold truncate max-w-full">@{data[0].username}</p>
