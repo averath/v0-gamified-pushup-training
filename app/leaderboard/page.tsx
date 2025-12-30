@@ -158,13 +158,12 @@ export default function LeaderboardPage() {
     const progress = calculateProgress(entry.total_reps)
     const isCurrentUser = currentUserId && entry.id === currentUserId
 
-    // Rank styling based on position
     const getRankStyle = () => {
-      if (rank === 1) return "from-yellow-500/30 via-yellow-600/20 to-yellow-500/30 border-yellow-500"
-      if (rank === 2) return "from-slate-400/30 via-slate-500/20 to-slate-400/30 border-slate-400"
-      if (rank === 3) return "from-amber-700/30 via-amber-800/20 to-amber-700/30 border-amber-700"
-      if (isCurrentUser) return "from-primary/20 via-primary/10 to-primary/20 border-primary"
-      return "from-card via-card to-card border-border"
+      if (rank === 1) return "from-yellow-500/30 via-yellow-600/20 to-yellow-500/30 border-yellow-500/50"
+      if (rank === 2) return "from-slate-400/30 via-slate-500/20 to-slate-400/30 border-slate-400/50"
+      if (rank === 3) return "from-amber-700/30 via-amber-800/20 to-amber-700/30 border-amber-700/50"
+      if (isCurrentUser) return "from-primary/20 via-primary/10 to-primary/20 border-primary/50"
+      return "from-card via-card to-card border-border/50"
     }
 
     // Rank badge component
@@ -224,14 +223,8 @@ export default function LeaderboardPage() {
     return (
       <div
         key={`${entry.id}-${entry.exercise_type}`}
-        className={`relative overflow-hidden rounded-xl border-2 bg-gradient-to-r ${getRankStyle()} transition-all hover:scale-[1.01] hover:shadow-lg`}
+        className={`relative overflow-hidden rounded-xl border bg-gradient-to-r ${getRankStyle()} transition-all hover:scale-[1.01] hover:shadow-lg`}
       >
-        {/* Decorative corner accents */}
-        <div className="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2 border-current opacity-50 rounded-tl" />
-        <div className="absolute top-0 right-0 w-3 h-3 border-r-2 border-t-2 border-current opacity-50 rounded-tr" />
-        <div className="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2 border-current opacity-50 rounded-bl" />
-        <div className="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-current opacity-50 rounded-br" />
-
         <div className="p-4">
           <div className="flex items-center gap-4">
             {/* Rank Badge */}
