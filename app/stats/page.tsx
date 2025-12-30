@@ -58,7 +58,7 @@ export default function StatsPage() {
 
         const [profileResult, workoutsResult, exerciseTypesResult] = await Promise.all([
           supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
-          supabase.from("workouts").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
+          supabase.from("workouts").select("*").eq("user_id", user.id).eq("is_quest_reward", false).order("created_at", { ascending: true }),
           supabase.from("exercise_types").select("*").order("created_at", { ascending: true }),
         ])
 

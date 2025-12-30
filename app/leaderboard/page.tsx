@@ -151,7 +151,7 @@ export default function LeaderboardPage() {
     }
   }
 
-  const renderLeaderboardEntry = (entry: LeaderboardEntry, index: number, exerciseName: string) => {
+  const renderLeaderboardEntry = (entry: LeaderboardEntry, index: number) => {
     const rank = index + 1
     const level = calculateLevel(entry.total_reps)
     const progress = calculateProgress(entry.total_reps)
@@ -277,9 +277,7 @@ export default function LeaderboardPage() {
                   <div className="absolute inset-0 blur-lg bg-gradient-to-r from-primary/30 to-accent/30 -z-10" />
                 )}
               </div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                {exerciseName.toLowerCase()}
-              </p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">XP</p>
             </div>
           </div>
         </div>
@@ -361,7 +359,7 @@ export default function LeaderboardPage() {
 
         {/* Rankings list */}
         <div className="space-y-2">
-          {data.map((entry, index) => renderLeaderboardEntry(entry, index, exerciseName))}
+          {data.map((entry, index) => renderLeaderboardEntry(entry, index))}
         </div>
       </div>
     )
