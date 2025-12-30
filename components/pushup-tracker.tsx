@@ -27,6 +27,7 @@ import { ExerciseSelector } from "@/components/exercise-selector"
 import { ShareResultsDialog } from "@/components/share-results-dialog"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
 import { useSoundSettings } from "@/hooks/use-sound-settings"
+import { Footer } from "@/components/footer"
 
 interface ExerciseType {
   id: string
@@ -202,7 +203,7 @@ export function PushupTracker({
   const currentWorkoutCount = workoutCounts[activeExercise] || 0
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background flex flex-col">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -280,7 +281,7 @@ export function PushupTracker({
         onOpenChange={setShowEditUsername}
       />
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
         <div className="mb-8">
           <ExerciseSelector exerciseTypes={exerciseTypes} value={activeExercise} onValueChange={setActiveExercise} />
         </div>
@@ -392,6 +393,8 @@ export function PushupTracker({
         onClose={() => setShowLevelUp(false)}
         soundEnabled={soundEnabled}
       />
+
+      <Footer />
     </main>
   )
 }

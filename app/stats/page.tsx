@@ -8,6 +8,7 @@ import Link from "next/link"
 import { getLevelProgress, getLevelTier, getTierIcon, MILESTONES, calculateLevel } from "@/lib/level-system"
 import { ExerciseSelector } from "@/components/exercise-selector"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
+import { Footer } from "@/components/footer"
 
 interface Workout {
   id: string
@@ -58,7 +59,12 @@ export default function StatsPage() {
 
         const [profileResult, workoutsResult, exerciseTypesResult] = await Promise.all([
           supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
-          supabase.from("workouts").select("*").eq("user_id", user.id).eq("is_quest_reward", false).order("created_at", { ascending: true }),
+          supabase
+            .from("workouts")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("is_quest_reward", false)
+            .order("created_at", { ascending: true }),
           supabase.from("exercise_types").select("*").order("created_at", { ascending: true }),
         ])
 
@@ -225,7 +231,7 @@ export default function StatsPage() {
   const tier = getLevelTier(stats.levelProgress.currentLevel)
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -244,7 +250,7 @@ export default function StatsPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
         {/* Exercise Selector */}
         <div className="mb-8">
           <ExerciseSelector exerciseTypes={exerciseTypes} value={activeExercise} onValueChange={setActiveExercise} />
@@ -460,6 +466,9 @@ export default function StatsPage() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </main>
   )
 }

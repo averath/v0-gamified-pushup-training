@@ -9,6 +9,7 @@ import { useEffect, useState } from "react"
 import { ExerciseSelector } from "@/components/exercise-selector"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
+import { Footer } from "@/components/footer"
 
 interface LeaderboardEntry {
   id: string
@@ -337,7 +338,7 @@ export default function LeaderboardPage() {
 
             {/* 1st place */}
             <div className="flex flex-col items-center">
-              <div className="w-20 h-20 rounded-xl bg-linear-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 mb-2 animate-pulse">
+              <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 mb-2 animate-pulse">
                 <Crown className="h-10 w-10 text-yellow-900" />
               </div>
               <p className="text-sm font-bold truncate max-w-full">@{data[0].username}</p>
@@ -358,22 +359,20 @@ export default function LeaderboardPage() {
         )}
 
         {/* Rankings list */}
-        <div className="space-y-2">
-          {data.map((entry, index) => renderLeaderboardEntry(entry, index))}
-        </div>
+        <div className="space-y-2">{data.map((entry, index) => renderLeaderboardEntry(entry, index))}</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Background decorations */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative container mx-auto px-4 py-8 max-w-4xl">
+      <div className="relative container mx-auto px-4 py-8 max-w-4xl flex-1">
         {/* Header */}
         <div className="mb-8">
           <Link href={currentUserId ? "/dashboard" : "/"}>
@@ -445,6 +444,9 @@ export default function LeaderboardPage() {
           />
         </>
       )}
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Trophy, TrendingUp, Users, Zap } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
+import { Footer } from "@/components/footer"
 
 export default async function LandingPage() {
   const supabase = await createClient()
@@ -10,7 +11,7 @@ export default async function LandingPage() {
   } = await supabase.auth.getUser()
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border/40 backdrop-blur-sm fixed top-0 w-full z-50 bg-background/80">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -175,19 +176,7 @@ export default async function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 py-8 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-                <Zap className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <span className="font-bold">LEVEL FITNESS</span>
-            </div>
-            <p className="text-sm text-muted-foreground">© 2025 Level Fitness. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
