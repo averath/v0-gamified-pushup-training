@@ -183,7 +183,7 @@ export default function LeaderboardPage() {
       if (rank === 2) {
         return (
           <div className="relative">
-            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-slate-300 to-slate-500 flex items-center justify-center shadow-lg shadow-slate-400/50">
+            <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-slate-300 to-slate-500 flex items-center justify-center shadow-lg shadow-slate-400/50">
               <Medal className="h-7 w-7 text-slate-800" />
             </div>
             <div className="absolute -top-1 -right-1 w-5 h-5 bg-slate-300 rounded-full flex items-center justify-center text-xs font-bold text-slate-800 border-2 border-background">
@@ -321,22 +321,22 @@ export default function LeaderboardPage() {
           <div className="grid grid-cols-3 gap-2 mb-6">
             {/* 2nd place */}
             <div className="flex flex-col items-center pt-8">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-slate-300 to-slate-500 flex items-center justify-center shadow-lg mb-2">
+              <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-slate-300 to-slate-500 flex items-center justify-center shadow-lg mb-2">
                 <Medal className="h-8 w-8 text-slate-800" />
               </div>
               <p className="text-sm font-bold truncate max-w-full">@{data[1].username}</p>
               <p className="text-lg font-black text-slate-400">{data[1].total_reps.toLocaleString()}</p>
-              <div className="w-full h-20 bg-gradient-to-t from-slate-500 to-slate-400 rounded-t-lg mt-2" />
+              <div className="w-full h-20 bg-gradient-to-t from-slate-500 to-slate-400 rounded-t-lg mt-2 border border-slate-400/50" />
             </div>
 
             {/* 1st place */}
             <div className="flex flex-col items-center">
-              <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 mb-2 animate-pulse">
+              <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 mb-2 animate-pulse">
                 <Crown className="h-10 w-10 text-yellow-900" />
               </div>
               <p className="text-sm font-bold truncate max-w-full">@{data[0].username}</p>
               <p className="text-xl font-black text-yellow-500">{data[0].total_reps.toLocaleString()}</p>
-              <div className="w-full h-28 bg-gradient-to-t from-yellow-600 to-yellow-500 rounded-t-lg mt-2" />
+              <div className="w-full h-28 bg-gradient-to-t from-yellow-600 to-yellow-500 rounded-t-lg mt-2 border border-yellow-500/50" />
             </div>
 
             {/* 3rd place */}
@@ -346,7 +346,7 @@ export default function LeaderboardPage() {
               </div>
               <p className="text-sm font-bold truncate max-w-full">@{data[2].username}</p>
               <p className="text-lg font-black text-amber-600">{data[2].total_reps.toLocaleString()}</p>
-              <div className="w-full h-16 bg-gradient-to-t from-amber-800 to-amber-700 rounded-t-lg mt-2" />
+              <div className="w-full h-16 bg-gradient-to-t from-amber-800 to-amber-700 rounded-t-lg mt-2 border border-amber-700/50" />
             </div>
           </div>
         )}
