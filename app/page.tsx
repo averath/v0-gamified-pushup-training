@@ -1,14 +1,42 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Trophy, TrendingUp, Users, Zap } from "lucide-react"
-import { createClient } from "@/lib/supabase/server"
 import { Footer } from "@/components/footer"
+import { LanguageProvider, useLanguage } from "@/lib/i18n/language-context"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { useEffect, useState } from "react"
+import { createBrowserClient } from "@/lib/supabase/client"
+import type { User } from "@supabase/supabase-js"
 
-export default async function LandingPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+function LandingPageContent() {
+  const { t } = useLanguage()
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createBrowserClient()
+
+    // Get initial user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (loading) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -21,18 +49,19 @@ export default async function LandingPage() {
             </div>
             <span className="font-bold text-xl tracking-tight">LEVEL FITNESS</span>
           </div>
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-2">
+            <LanguageSwitcher />
             {user ? (
               <Link href="/dashboard">
-                <Button>Go to Dashboard</Button>
+                <Button>{t.hero.cta.dashboard}</Button>
               </Link>
             ) : (
               <>
                 <Link href="/auth/login">
-                  <Button variant="ghost">Log in</Button>
+                  <Button variant="ghost">{t.nav.login}</Button>
                 </Link>
                 <Link href="/auth/sign-up">
-                  <Button>Sign up</Button>
+                  <Button>{t.nav.signup}</Button>
                 </Link>
               </>
             )}
@@ -47,37 +76,34 @@ export default async function LandingPage() {
             <div className="inline-block">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary mb-6">
                 <Zap className="w-4 h-4" />
-                Level Up Your Fitness
+                {t.hero.badge}
               </div>
             </div>
             <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-balance leading-[0.9]">
-              TRANSFORM
+              {t.hero.title.line1}
               <br />
-              <span className="text-primary">WORKOUTS</span>
+              <span className="text-primary">{t.hero.title.line2}</span>
               <br />
-              INTO POWER
+              {t.hero.title.line3}
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto text-pretty">
-              Track every rep. Level up your strength. Compete with athletes worldwide in the ultimate gamified training
-              experience.
-            </p>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto text-pretty">{t.hero.subtitle}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               {user ? (
                 <Link href="/dashboard">
                   <Button size="lg" className="text-lg px-8 h-14 font-bold">
-                    Go to Dashboard
+                    {t.hero.cta.dashboard}
                   </Button>
                 </Link>
               ) : (
                 <Link href="/auth/sign-up">
                   <Button size="lg" className="text-lg px-8 h-14 font-bold">
-                    Start Training Free
+                    {t.hero.cta.start}
                   </Button>
                 </Link>
               )}
               <Link href="/leaderboard">
                 <Button size="lg" variant="outline" className="text-lg px-8 h-14 font-bold bg-transparent">
-                  View Leaderboard
+                  {t.hero.cta.leaderboard}
                 </Button>
               </Link>
             </div>
@@ -91,15 +117,15 @@ export default async function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="space-y-2">
               <div className="text-5xl font-black text-primary">10+</div>
-              <div className="text-muted-foreground font-medium">Progressive Levels</div>
+              <div className="text-muted-foreground font-medium">{t.hero.stats.levels}</div>
             </div>
             <div className="space-y-2">
               <div className="text-5xl font-black text-accent">1000+</div>
-              <div className="text-muted-foreground font-medium">Reps Tracked</div>
+              <div className="text-muted-foreground font-medium">{t.hero.stats.reps}</div>
             </div>
             <div className="space-y-2">
               <div className="text-5xl font-black text-primary">∞</div>
-              <div className="text-muted-foreground font-medium">Potential Unlocked</div>
+              <div className="text-muted-foreground font-medium">{t.hero.stats.potential}</div>
             </div>
           </div>
         </div>
@@ -109,8 +135,8 @@ export default async function LandingPage() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">LEVEL UP YOUR GAME</h2>
-            <p className="text-xl text-muted-foreground">Every rep counts. Every level matters.</p>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">{t.hero.features.title}</h2>
+            <p className="text-xl text-muted-foreground">{t.hero.features.subtitle}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -119,11 +145,8 @@ export default async function LandingPage() {
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold">Progressive Leveling</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Start at Level 1 with just 10 reps. Each level requires 10x more. Watch your strength multiply
-                exponentially across all your exercises.
-              </p>
+              <h3 className="text-2xl font-bold">{t.hero.features.progressive.title}</h3>
+              <p className="text-muted-foreground leading-relaxed">{t.hero.features.progressive.description}</p>
             </div>
 
             {/* Feature 2 */}
@@ -131,11 +154,8 @@ export default async function LandingPage() {
               <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
                 <Trophy className="w-6 h-6 text-accent" />
               </div>
-              <h3 className="text-2xl font-bold">Real-Time Tracking</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Log your workouts instantly. See your progress visualized with dynamic charts and celebrate every
-                milestone.
-              </p>
+              <h3 className="text-2xl font-bold">{t.hero.features.tracking.title}</h3>
+              <p className="text-muted-foreground leading-relaxed">{t.hero.features.tracking.description}</p>
             </div>
 
             {/* Feature 3 */}
@@ -143,10 +163,8 @@ export default async function LandingPage() {
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                 <Users className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold">Global Leaderboard</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Compete with athletes worldwide. Climb the ranks and prove your dedication to the grind.
-              </p>
+              <h3 className="text-2xl font-bold">{t.hero.features.leaderboard.title}</h3>
+              <p className="text-muted-foreground leading-relaxed">{t.hero.features.leaderboard.description}</p>
             </div>
           </div>
         </div>
@@ -155,20 +173,18 @@ export default async function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background to-primary/5">
         <div className="container mx-auto max-w-4xl text-center space-y-8">
-          <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-balance">READY TO LEVEL UP?</h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Join the community of dedicated athletes pushing their limits every single day.
-          </p>
+          <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-balance">{t.hero.cta2.title}</h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{t.hero.cta2.subtitle}</p>
           {user ? (
             <Link href="/dashboard">
               <Button size="lg" className="text-lg px-12 h-14 font-bold">
-                Continue Training
+                {t.hero.cta.continue}
               </Button>
             </Link>
           ) : (
             <Link href="/auth/sign-up">
               <Button size="lg" className="text-lg px-12 h-14 font-bold">
-                Start Your Journey
+                {t.hero.cta2.button}
               </Button>
             </Link>
           )}
@@ -178,5 +194,13 @@ export default async function LandingPage() {
       {/* Footer */}
       <Footer />
     </div>
+  )
+}
+
+export default function LandingPage() {
+  return (
+    <LanguageProvider>
+      <LandingPageContent />
+    </LanguageProvider>
   )
 }
