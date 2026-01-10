@@ -75,14 +75,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="icon" href="/icon-192.jpg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icon-192.jpg" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js').catch(() => {
-                    // Service worker registration failed, app still works
-                  });
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                      console.log('[PWA] Service Worker registered:', registration.scope);
+                    })
+                    .catch(error => {
+                      console.log('[PWA] Service Worker registration failed:', error);
+                    });
                 });
               }
             `,
