@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -47,6 +47,24 @@ export const metadata: Metadata = {
       "Transform push-ups into power. Track every rep, level up your strength, and compete with athletes worldwide.",
     images: ["/og-image.jpg"],
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "LVL UP",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: "#000000",
+  viewportFit: "cover",
 }
 
 export default function RootLayout({
@@ -56,6 +74,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                  navigator.serviceWorker.register('/sw.js').catch(() => {
+                    // Service worker registration failed, app still works
+                  });
+                });
+              }
+            `,
+          }}
+        />
+      </head>
       <body className={`font-sans ${inter.variable} ${jetbrainsMono.variable}`}>
         <Suspense fallback={<div>Loading...</div>}>
           {children}
