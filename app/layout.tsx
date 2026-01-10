@@ -75,8 +75,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/icon-192.jpg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icon-192.jpg" />
+        <link rel="icon" href="/icon-192.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icon-192.svg" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

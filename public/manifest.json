@@ -2,7 +2,7 @@
   "name": "LVL UP - Gamified Fitness Training",
   "short_name": "LVL UP",
   "description": "Transform your workouts into power. Track every rep, level up your strength, and compete with athletes worldwide.",
-  "start_url": "/dashboard",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "theme_color": "#000000",

@@ -6,6 +6,7 @@ import { Trophy, TrendingUp, Users, Zap } from "lucide-react"
 import { Footer } from "@/components/footer"
 import { LanguageProvider, useLanguage } from "@/lib/i18n/language-context"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { InstallPWAButton } from "@/components/install-pwa-button"
 import { useEffect, useState } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
@@ -50,6 +51,7 @@ function LandingPageContent() {
             <span className="font-bold text-xl tracking-tight">LEVEL FITNESS</span>
           </div>
           <nav className="flex items-center gap-2">
+            <InstallPWAButton />
             <LanguageSwitcher />
             {user ? (
               <Link href="/dashboard">
