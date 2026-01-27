@@ -56,6 +56,8 @@ export async function updateSession(request: NextRequest) {
   const publicPaths = ["/", "/leaderboard"]
   const isPublicPath = publicPaths.includes(request.nextUrl.pathname)
   const isAuthPath = request.nextUrl.pathname.startsWith("/auth")
+  const isResetPasswordPath = request.nextUrl.pathname === "/auth/reset-password"
+  const isCallbackPath = request.nextUrl.pathname === "/auth/callback"
 
   if (!user && !isPublicPath && !isAuthPath) {
     // no user, potentially respond by redirecting the user to the login page
@@ -64,7 +66,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && isAuthPath) {
+  // Allow authenticated users to access reset-password page (needed for password reset flow)
+  // Allow all users to access callback page (needed for token exchange)
+  if (user && isAuthPath && !isResetPasswordPath && !isCallbackPath) {
     const url = request.nextUrl.clone()
     url.pathname = "/dashboard"
     return NextResponse.redirect(url)
