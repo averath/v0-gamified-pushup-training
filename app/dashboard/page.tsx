@@ -23,20 +23,34 @@ export default function DashboardPage() {
     exerciseTypes: ExerciseType[]
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
 
   useEffect(() => {
     async function loadData() {
+      console.log("[v0] Dashboard loading started")
       try {
+        // Check if Supabase is configured
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+          console.error("[v0] Supabase environment variables not configured")
+          setError("App not configured. Please check environment variables.")
+          setIsLoading(false)
+          return
+        }
+
+        const supabase = createClient()
+        console.log("[v0] Supabase client created")
+
         const {
           data: { user },
         } = await supabase.auth.getUser()
+        console.log("[v0] User fetched:", user?.id)
 
         if (!user) {
+          console.log("[v0] No user found, redirecting to login")
           window.location.href = "/auth/login"
           return
         }
 
+        console.log("[v0] Fetching dashboard data...")
         const [profileResult, recentWorkoutsResult, allWorkoutsResult, exerciseTypesResult] = await Promise.all([
           supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
           supabase
@@ -53,13 +67,23 @@ export default function DashboardPage() {
           supabase.from("exercise_types").select("*").order("created_at", { ascending: true }),
         ])
 
+        console.log("[v0] Data fetched, processing...")
         const { data: recentWorkouts, error: workoutsError } = recentWorkoutsResult
         const { data: allWorkouts, error: allWorkoutsError } = allWorkoutsResult
         const { data: exerciseTypes, error: exerciseTypesError } = exerciseTypesResult
 
-        if (workoutsError) throw workoutsError
-        if (allWorkoutsError) throw allWorkoutsError
-        if (exerciseTypesError) throw exerciseTypesError
+        if (workoutsError) {
+          console.error("[v0] Workouts error:", workoutsError)
+          throw workoutsError
+        }
+        if (allWorkoutsError) {
+          console.error("[v0] All workouts error:", allWorkoutsError)
+          throw allWorkoutsError
+        }
+        if (exerciseTypesError) {
+          console.error("[v0] Exercise types error:", exerciseTypesError)
+          throw exerciseTypesError
+        }
 
         const totals: Record<string, number> = {}
         const workoutCounts: Record<string, number> = {}
@@ -80,6 +104,7 @@ export default function DashboardPage() {
           }
         })
 
+        console.log("[v0] Setting dashboard data...")
         setData({
           workouts: recentWorkouts || [],
           allWorkouts: allWorkouts || [],
@@ -88,10 +113,12 @@ export default function DashboardPage() {
           username: profileResult.data?.username || user.email || "",
           exerciseTypes: exerciseTypes || [],
         })
+        console.log("[v0] Dashboard data set successfully")
       } catch (err) {
-        console.error("Error loading dashboard data:", err)
+        console.error("[v0] Error loading dashboard data:", err)
         setError("Failed to load dashboard data")
       } finally {
+        console.log("[v0] Dashboard loading complete")
         setIsLoading(false)
       }
     }
