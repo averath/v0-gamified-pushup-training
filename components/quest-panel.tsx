@@ -41,7 +41,10 @@ function getClaimedQuestsKey(type: "daily" | "weekly"): string {
   if (type === "daily") {
     return `claimed-quests-daily-${now.toISOString().split("T")[0]}`
   } else {
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
+    // Monday = 1, Sunday = 0. Adjust so Monday is start of week
+    const dayOfWeek = now.getDay()
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysFromMonday)
     return `claimed-quests-weekly-${startOfWeek.toISOString().split("T")[0]}`
   }
 }
@@ -83,7 +86,10 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, onClaimXP }: 
   const quests = useMemo(() => {
     const now = new Date()
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime()
+    // Monday = 1, Sunday = 0. Adjust so Monday is start of week
+    const dayOfWeek = now.getDay()
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysFromMonday).getTime()
 
     // Filter workouts for current exercise type and exclude quest rewards
     const exerciseWorkouts = workouts.filter((w) => w.exercise_type === exerciseType && !w.is_quest_reward)

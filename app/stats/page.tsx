@@ -172,7 +172,10 @@ export default function StatsPage() {
     filteredWorkouts.forEach((w) => {
       const date = new Date(w.created_at)
       const weekStart = new Date(date)
-      weekStart.setDate(date.getDate() - date.getDay())
+      // Monday = 1, Sunday = 0. Adjust so Monday is start of week
+      const dayOfWeek = date.getDay()
+      const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+      weekStart.setDate(date.getDate() - daysFromMonday)
       const weekKey = weekStart.toISOString().split("T")[0]
       const existing = weeklyMap.get(weekKey) || { total: 0, count: 0 }
       weeklyMap.set(weekKey, { total: existing.total + w.value, count: existing.count + 1 })
