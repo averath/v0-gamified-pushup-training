@@ -1,5 +1,5 @@
 // Service Worker for LVL UP PWA
-const CACHE_NAME = "lvl-up-v1"
+const CACHE_NAME = "lvl-up-v2"
 const urlsToCache = ["/", "/dashboard", "/leaderboard", "/stats"]
 
 // Install event - cache resources
