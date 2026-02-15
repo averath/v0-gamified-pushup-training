@@ -1,7 +1,7 @@
 // Service Worker for LVL UP PWA
 const CACHE_NAME = "lvl-up-v2"
 const urlsToCache = ["/", "/dashboard", "/leaderboard", "/stats"]
-
+console.log(CACHE_NAME)
 // Install event - cache resources
 self.addEventListener("install", (event) => {
   event.waitUntil(
