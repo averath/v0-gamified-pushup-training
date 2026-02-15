@@ -1,5 +1,5 @@
 // Service Worker for LVL UP PWA
-const CACHE_NAME = "lvl-up-v1"
+const CACHE_NAME = "lvl-up-v2"
 const urlsToCache = ["/", "/dashboard", "/leaderboard", "/stats"]
 
 // Install event - cache resources
@@ -32,26 +32,36 @@ self.addEventListener("activate", (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener("fetch", (event) => {
-  // Only cache GET requests
   if (event.request.method !== "GET") {
     return
   }
 
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response
+    caches.match(event.request).then(async (cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse
       }
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== "basic") {
-          return response
-        }
-        const responseToCache = response.clone()
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache)
+
+      try {
+        // Clone request and explicitly follow redirects
+        const networkResponse = await fetch(event.request.clone(), {
+          redirect: 'follow'
         })
-        return response
-      })
-    }),
+
+        // Don't cache redirects (type 'opaqueredirect' or non-200)
+        if (networkResponse.ok && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone()
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache)
+          })
+        }
+
+        return networkResponse
+      } catch (error) {
+        console.log('[SW] Fetch failed:', error)
+        // Optional: Return a fallback offline page
+        return caches.match('/')
+      }
+    })
   )
 })
