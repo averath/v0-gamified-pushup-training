@@ -1,8 +1,9 @@
 -- 1. Update running multiplier: 2× per hour (was 10× per minute)
 update public.exercise_types set xp_multiplier = 2.0 where id = 'running';
 
--- 2. Recreate combined_leaderboard excluding quest-reward rows
---    Quest rewards are XP bonuses, not real workout effort – exclude them.
+-- 2. Recreate combined_leaderboard INCLUDING quest-reward rows
+--    Quest bonus XP counts toward the combined total; it is only excluded in
+--    the per-exercise sub-leaderboards (leaderboard_stats below).
 create or replace view public.combined_leaderboard as
 select
   p.id,
@@ -12,9 +13,8 @@ select
 from public.profiles p
 inner join public.workouts w on p.id = w.user_id
 inner join public.exercise_types et on w.exercise_type = et.id
-where w.is_quest_reward = false
 group by p.id, p.username
-having floor(coalesce(sum(case when not w.is_quest_reward then w.value * et.xp_multiplier else 0 end), 0)) > 0
+having floor(coalesce(sum(w.value * et.xp_multiplier), 0)) > 0
 order by total_xp desc;
 
 grant select on public.combined_leaderboard to authenticated;
