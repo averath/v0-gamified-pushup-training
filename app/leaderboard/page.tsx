@@ -2,16 +2,45 @@
 
 import { createClient } from "@/lib/supabase/client"
 import { calculateLevel, calculateProgress } from "@/lib/level-system"
-import { Trophy, Medal, Award, ArrowLeft, Loader2, Plus, Crown, Star, Zap, Flame, Shield } from "lucide-react"
+import {
+  Trophy,
+  Medal,
+  Award,
+  ArrowLeft,
+  Loader2,
+  Plus,
+  Crown,
+  Star,
+  Zap,
+  Flame,
+  Shield,
+  Dumbbell,
+} from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
-import { ExerciseSelector } from "@/components/exercise-selector"
+import { useEffect, useState, useCallback } from "react"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
-import { useSelectedExercise } from "@/hooks/use-selected-exercise"
 import { Footer } from "@/components/footer"
 
-interface LeaderboardEntry {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface ExerciseType {
+  id: string
+  name: string
+  display_name: string
+  icon: string | null
+  measurement_type: string | null
+  xp_multiplier: number
+}
+
+interface CombinedEntry {
+  id: string
+  username: string
+  total_xp: number
+  workout_count: number
+}
+
+interface SubEntry {
   id: string
   username: string
   exercise_type: string | null
@@ -19,343 +48,432 @@ interface LeaderboardEntry {
   workout_count: number
 }
 
-interface ExerciseType {
-  id: string
-  name: string
-  display_name: string
-  icon: string | null
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const COMBINED_TAB = "__combined__"
+
+function unitLabel(measurementType: string | null): string {
+  if (measurementType === "seconds") return "sec"
+  if (measurementType === "minutes") return "min"
+  return "reps"
 }
+
+function getLevelIcon(level: number) {
+  if (level >= 50) return <Flame className="h-4 w-4 text-red-500" />
+  if (level >= 30) return <Zap className="h-4 w-4 text-yellow-500" />
+  if (level >= 15) return <Star className="h-4 w-4 text-primary" />
+  if (level >= 5) return <Shield className="h-4 w-4 text-accent" />
+  return null
+}
+
+function getRankStyle(rank: number, isCurrentUser: boolean) {
+  if (rank === 1) return "from-yellow-500/30 via-yellow-600/20 to-yellow-500/30 border-yellow-500/50"
+  if (rank === 2) return "from-slate-400/30 via-slate-500/20 to-slate-400/30 border-slate-400/50"
+  if (rank === 3) return "from-amber-700/30 via-amber-800/20 to-amber-700/30 border-amber-700/50"
+  if (isCurrentUser) return "from-primary/20 via-primary/10 to-primary/20 border-primary/50"
+  return "from-card via-card to-card border-border/50"
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function RankBadge({ rank }: { rank: number }) {
+  if (rank === 1) {
+    return (
+      <div className="relative shrink-0">
+        <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 animate-pulse">
+          <Crown className="h-8 w-8 text-yellow-900" />
+        </div>
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-xs font-bold text-yellow-900 border-2 border-background">
+          1
+        </div>
+      </div>
+    )
+  }
+  if (rank === 2) {
+    return (
+      <div className="relative shrink-0">
+        <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-slate-300 to-slate-500 flex items-center justify-center shadow-lg shadow-slate-400/50">
+          <Medal className="h-7 w-7 text-slate-800" />
+        </div>
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-slate-300 rounded-full flex items-center justify-center text-xs font-bold text-slate-800 border-2 border-background">
+          2
+        </div>
+      </div>
+    )
+  }
+  if (rank === 3) {
+    return (
+      <div className="relative shrink-0">
+        <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center shadow-lg shadow-amber-700/50">
+          <Award className="h-7 w-7 text-amber-200" />
+        </div>
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center text-xs font-bold text-amber-100 border-2 border-background">
+          3
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="w-14 h-14 shrink-0 rounded-lg bg-background/80 border-2 border-border flex items-center justify-center">
+      <span className="text-2xl font-bold text-muted-foreground">{rank}</span>
+    </div>
+  )
+}
+
+// Combined leaderboard row — shows level + XP
+function CombinedRow({
+  entry,
+  index,
+  currentUserId,
+}: {
+  entry: CombinedEntry
+  index: number
+  currentUserId: string | null
+}) {
+  const rank = index + 1
+  const level = calculateLevel(entry.total_xp)
+  const progress = calculateProgress(entry.total_xp)
+  const isCurrentUser = !!currentUserId && entry.id === currentUserId
+
+  return (
+    <div
+      key={entry.id}
+      className={`relative overflow-hidden rounded-xl border bg-gradient-to-r ${getRankStyle(rank, isCurrentUser)} transition-all hover:scale-[1.01] hover:shadow-lg`}
+    >
+      <div className="p-4">
+        <div className="flex items-center gap-4">
+          <RankBadge rank={rank} />
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-lg font-bold truncate">@{entry.username}</p>
+              {isCurrentUser && (
+                <span className="text-xs px-2 py-0.5 bg-primary text-primary-foreground rounded-full font-semibold animate-pulse">
+                  YOU
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-background/50 rounded-full px-2 py-0.5 border border-border">
+                {getLevelIcon(level)}
+                <span className="text-xs font-semibold">LVL {level}</span>
+              </div>
+              <div className="flex-1 max-w-24 h-2 bg-background/80 rounded-full overflow-hidden border border-border">
+                <div
+                  className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <span className="text-xs text-muted-foreground">{entry.workout_count} sessions</span>
+            </div>
+          </div>
+
+          <div className="text-right shrink-0">
+            <div className="relative">
+              <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+                {entry.total_xp.toLocaleString()}
+              </p>
+              {rank <= 3 && (
+                <div className="absolute inset-0 blur-lg bg-gradient-to-r from-primary/30 to-accent/30 -z-10" />
+              )}
+            </div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">XP</p>
+          </div>
+        </div>
+      </div>
+      {rank <= 3 && (
+        <div
+          className={`h-1 w-full ${
+            rank === 1
+              ? "bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400"
+              : rank === 2
+                ? "bg-gradient-to-r from-slate-300 via-slate-400 to-slate-300"
+                : "bg-gradient-to-r from-amber-600 via-amber-700 to-amber-600"
+          }`}
+        />
+      )}
+    </div>
+  )
+}
+
+// Sub-leaderboard row — shows raw count only, no XP bar
+function SubRow({
+  entry,
+  index,
+  currentUserId,
+  unit,
+}: {
+  entry: SubEntry
+  index: number
+  currentUserId: string | null
+  unit: string
+}) {
+  const rank = index + 1
+  const isCurrentUser = !!currentUserId && entry.id === currentUserId
+
+  return (
+    <div
+      key={`${entry.id}-${entry.exercise_type}`}
+      className={`relative overflow-hidden rounded-xl border bg-gradient-to-r ${getRankStyle(rank, isCurrentUser)} transition-all hover:scale-[1.01] hover:shadow-lg`}
+    >
+      <div className="p-4">
+        <div className="flex items-center gap-4">
+          <RankBadge rank={rank} />
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-bold truncate">@{entry.username}</p>
+              {isCurrentUser && (
+                <span className="text-xs px-2 py-0.5 bg-primary text-primary-foreground rounded-full font-semibold animate-pulse">
+                  YOU
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">{entry.workout_count} sessions</p>
+          </div>
+
+          <div className="text-right shrink-0">
+            <div className="relative">
+              <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+                {entry.total_reps.toLocaleString()}
+              </p>
+              {rank <= 3 && (
+                <div className="absolute inset-0 blur-lg bg-gradient-to-r from-primary/30 to-accent/30 -z-10" />
+              )}
+            </div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{unit}</p>
+          </div>
+        </div>
+      </div>
+      {rank <= 3 && (
+        <div
+          className={`h-1 w-full ${
+            rank === 1
+              ? "bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400"
+              : rank === 2
+                ? "bg-gradient-to-r from-slate-300 via-slate-400 to-slate-300"
+                : "bg-gradient-to-r from-amber-600 via-amber-700 to-amber-600"
+          }`}
+        />
+      )}
+    </div>
+  )
+}
+
+function EmptyState() {
+  return (
+    <div className="relative p-12 rounded-xl border-2 border-dashed border-border bg-card/50 text-center">
+      <Trophy className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+      <p className="text-xl font-bold text-muted-foreground mb-2">No Champions Yet</p>
+      <p className="text-sm text-muted-foreground">Be the first to claim the throne!</p>
+    </div>
+  )
+}
+
+function LoadingState() {
+  return (
+    <div className="relative p-12 rounded-xl border-2 border-border bg-card text-center overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-pulse" />
+      <Loader2 className="h-12 w-12 text-primary mx-auto mb-3 animate-spin" />
+      <p className="text-muted-foreground font-medium">Loading warriors...</p>
+    </div>
+  )
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function LeaderboardPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [leaderboardData, setLeaderboardData] = useState<Record<string, LeaderboardEntry[] | null>>({})
-  const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([])
   const [exerciseTypesLoading, setExerciseTypesLoading] = useState(true)
-  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [activeTab, setActiveTab] = useState<string>(COMBINED_TAB)
 
+  // Combined board data
+  const [combinedData, setCombinedData] = useState<CombinedEntry[] | null>(null)
+  const [combinedLoading, setCombinedLoading] = useState(false)
+
+  // Per-exercise board data keyed by exercise id
+  const [subData, setSubData] = useState<Record<string, SubEntry[] | null>>({})
+  const [subLoading, setSubLoading] = useState<Record<string, boolean>>({})
+
+  const [showAddDialog, setShowAddDialog] = useState(false)
   const supabase = createClient()
 
-  const [activeTab, setActiveTab] = useSelectedExercise(exerciseTypes)
-
+  // Fetch auth + exercise types on mount
   useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id || null))
+
     async function fetchExerciseTypes() {
-      const { data } = await supabase.from("exercise_types").select("*").order("created_at", { ascending: true })
-
-      if (data && data.length > 0) {
-        setExerciseTypes(data)
-
-        // Initialize loading states
-        const initialLoading: Record<string, boolean> = {}
-        data.forEach((type) => {
-          initialLoading[type.id] = type.id === activeTab
-        })
-        setLoading(initialLoading)
-      }
+      const { data } = await supabase
+        .from("exercise_types")
+        .select("id, name, display_name, icon, measurement_type, xp_multiplier")
+        .order("created_at", { ascending: true })
+      if (data && data.length > 0) setExerciseTypes(data)
       setExerciseTypesLoading(false)
     }
     fetchExerciseTypes()
   }, [])
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setCurrentUserId(user?.id || null)
-    })
-  }, [])
+  // Fetch combined leaderboard
+  const fetchCombined = useCallback(async () => {
+    setCombinedLoading(true)
+    const { data } = await supabase
+      .from("combined_leaderboard")
+      .select("id, username, total_xp, workout_count")
+      .order("total_xp", { ascending: false })
+      .limit(100)
+    setCombinedData((data || []) as CombinedEntry[])
+    setCombinedLoading(false)
+  }, [supabase])
 
-  useEffect(() => {
-    if (!activeTab) return
-
-    const fetchLeaderboard = async (exerciseType: string) => {
-      // Skip if already loaded
-      if (leaderboardData[exerciseType] !== undefined && leaderboardData[exerciseType] !== null) return
-
-      setLoading((prev) => ({ ...prev, [exerciseType]: true }))
-
+  // Fetch one exercise sub-leaderboard
+  const fetchSub = useCallback(
+    async (exerciseId: string) => {
+      setSubLoading((prev) => ({ ...prev, [exerciseId]: true }))
       const { data } = await supabase
         .from("leaderboard_stats")
-        .select("*")
-        .eq("exercise_type", exerciseType)
+        .select("id, username, exercise_type, total_reps, workout_count")
+        .eq("exercise_type", exerciseId)
         .order("total_reps", { ascending: false })
         .limit(100)
+      setSubData((prev) => ({ ...prev, [exerciseId]: (data || []) as SubEntry[] }))
+      setSubLoading((prev) => ({ ...prev, [exerciseId]: false }))
+    },
+    [supabase],
+  )
 
-      setLeaderboardData((prev) => ({
-        ...prev,
-        [exerciseType]: (data || []) as LeaderboardEntry[],
-      }))
-      setLoading((prev) => ({ ...prev, [exerciseType]: false }))
+  // Lazy-load data when tab changes
+  useEffect(() => {
+    if (activeTab === COMBINED_TAB) {
+      if (combinedData === null && !combinedLoading) fetchCombined()
+    } else {
+      if (subData[activeTab] === undefined && !subLoading[activeTab]) fetchSub(activeTab)
     }
+  }, [activeTab, combinedData, combinedLoading, subData, subLoading, fetchCombined, fetchSub])
 
-    fetchLeaderboard(activeTab)
-  }, [activeTab])
-
-  const handleWorkoutAdded = async () => {
-    if (!activeTab) return
-
-    // Invalidate the current tab's data to force a refresh
-    setLeaderboardData((prev) => ({
-      ...prev,
-      [activeTab]: null,
-    }))
-
-    // Refetch the current tab's data
-    setLoading((prev) => ({ ...prev, [activeTab]: true }))
-    const { data } = await supabase
-      .from("leaderboard_stats")
-      .select("*")
-      .eq("exercise_type", activeTab)
-      .order("total_reps", { ascending: false })
-      .limit(100)
-
-    setLeaderboardData((prev) => ({
-      ...prev,
-      [activeTab]: (data || []) as LeaderboardEntry[],
-    }))
-    setLoading((prev) => ({ ...prev, [activeTab]: false }))
-  }
+  // Invalidate + refresh current tab after a workout is added
+  const handleWorkoutAdded = useCallback(async () => {
+    if (activeTab === COMBINED_TAB) {
+      setCombinedData(null)
+      fetchCombined()
+    } else {
+      setSubData((prev) => ({ ...prev, [activeTab]: null }))
+      fetchSub(activeTab)
+    }
+  }, [activeTab, fetchCombined, fetchSub])
 
   const handleAddWorkout = async (count: number, exerciseType: string) => {
-    console.log("[v0] Adding workout:", count, exerciseType)
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
 
-      if (!user) {
-        console.error("[v0] User not authenticated")
-        throw new Error("Not authenticated")
-      }
-
-      console.log("[v0] Inserting workout for user:", user.id)
-      const { data: newWorkout, error } = await supabase
-        .from("workouts")
-        .insert({
-          user_id: user.id,
-          value: count,
-          exercise_type: exerciseType,
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error("[v0] Error inserting workout:", error)
-        throw error
-      }
-
-      console.log("[v0] Workout added successfully:", newWorkout)
-
-      // Refresh the leaderboard after adding workout
+      const { error } = await supabase.from("workouts").insert({
+        user_id: user.id,
+        value: count,
+        exercise_type: exerciseType,
+      })
+      if (error) throw error
       await handleWorkoutAdded()
     } catch (error) {
-      console.error("[v0] Error adding workout:", error)
+      console.error("Error adding workout:", error)
       alert("Failed to add workout. Please try again.")
     }
   }
 
-  const renderLeaderboardEntry = (entry: LeaderboardEntry, index: number) => {
-    const rank = index + 1
-    const level = calculateLevel(entry.total_reps)
-    const progress = calculateProgress(entry.total_reps)
-    const isCurrentUser = currentUserId && entry.id === currentUserId
+  // ── Render helpers ─────────────────────────────────────────────────────────
 
-    const getRankStyle = () => {
-      if (rank === 1) return "from-yellow-500/30 via-yellow-600/20 to-yellow-500/30 border-yellow-500/50"
-      if (rank === 2) return "from-slate-400/30 via-slate-500/20 to-slate-400/30 border-slate-400/50"
-      if (rank === 3) return "from-amber-700/30 via-amber-800/20 to-amber-700/30 border-amber-700/50"
-      if (isCurrentUser) return "from-primary/20 via-primary/10 to-primary/20 border-primary/50"
-      return "from-card via-card to-card border-border/50"
-    }
-
-    // Rank badge component
-    const RankBadge = () => {
-      if (rank === 1) {
-        return (
-          <div className="relative">
-            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 animate-pulse">
-              <Crown className="h-8 w-8 text-yellow-900" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-xs font-bold text-yellow-900 border-2 border-background">
-              1
-            </div>
-          </div>
-        )
-      }
-      if (rank === 2) {
-        return (
-          <div className="relative">
-            <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-slate-300 to-slate-500 flex items-center justify-center shadow-lg shadow-slate-400/50">
-              <Medal className="h-7 w-7 text-slate-800" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-slate-300 rounded-full flex items-center justify-center text-xs font-bold text-slate-800 border-2 border-background">
-              2
-            </div>
-          </div>
-        )
-      }
-      if (rank === 3) {
-        return (
-          <div className="relative">
-            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center shadow-lg shadow-amber-700/50">
-              <Award className="h-7 w-7 text-amber-200" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center text-xs font-bold text-amber-100 border-2 border-background">
-              3
-            </div>
-          </div>
-        )
-      }
-      return (
-        <div className="w-14 h-14 rounded-lg bg-background/80 border-2 border-border flex items-center justify-center">
-          <span className="text-2xl font-bold text-muted-foreground">{rank}</span>
-        </div>
-      )
-    }
-
-    // Level icon based on level tier
-    const getLevelIcon = () => {
-      if (level >= 50) return <Flame className="h-4 w-4 text-red-500" />
-      if (level >= 30) return <Zap className="h-4 w-4 text-yellow-500" />
-      if (level >= 15) return <Star className="h-4 w-4 text-primary" />
-      if (level >= 5) return <Shield className="h-4 w-4 text-accent" />
-      return null
-    }
+  const renderCombinedBoard = () => {
+    if (combinedLoading) return <LoadingState />
+    if (!combinedData || combinedData.length === 0) return <EmptyState />
 
     return (
-      <div
-        key={`${entry.id}-${entry.exercise_type}`}
-        className={`relative overflow-hidden rounded-xl border bg-gradient-to-r ${getRankStyle()} transition-all hover:scale-[1.01] hover:shadow-lg`}
-      >
-        <div className="p-4">
-          <div className="flex items-center gap-4">
-            {/* Rank Badge */}
-            <RankBadge />
+      <div className="space-y-2">
+        {combinedData.map((entry, i) => (
+          <CombinedRow key={entry.id} entry={entry} index={i} currentUserId={currentUserId} />
+        ))}
+      </div>
+    )
+  }
 
-            {/* User Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-lg font-bold truncate">@{entry.username}</p>
-                {isCurrentUser && (
-                  <span className="text-xs px-2 py-0.5 bg-primary text-primary-foreground rounded-full font-semibold animate-pulse">
-                    YOU
-                  </span>
-                )}
-              </div>
+  const renderSubBoard = (exerciseId: string) => {
+    const ex = exerciseTypes.find((e) => e.id === exerciseId)
+    const unit = unitLabel(ex?.measurement_type ?? null)
+    const data = subData[exerciseId]
+    const loading = subLoading[exerciseId]
 
-              {/* Level display with XP bar */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-background/50 rounded-full px-2 py-0.5 border border-border">
-                  {getLevelIcon()}
-                  <span className="text-xs font-semibold">LVL {level}</span>
-                </div>
+    if (loading) return <LoadingState />
+    if (!data || data.length === 0) return <EmptyState />
 
-                {/* Mini XP bar */}
-                <div className="flex-1 max-w-24 h-2 bg-background/80 rounded-full overflow-hidden border border-border">
-                  <div
-                    className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
+    return (
+      <div className="space-y-2">
+        {data.map((entry, i) => (
+          <SubRow key={`${entry.id}-${entry.exercise_type}`} entry={entry} index={i} currentUserId={currentUserId} unit={unit} />
+        ))}
+      </div>
+    )
+  }
 
-                <span className="text-xs text-muted-foreground">{entry.workout_count} sessions</span>
-              </div>
-            </div>
+  // ── XP multiplier legend ───────────────────────────────────────────────────
 
-            {/* Stats */}
-            <div className="text-right">
-              <div className="relative">
-                <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-                  {entry.total_reps.toLocaleString()}
-                </p>
-                {/* Glow effect for top 3 */}
-                {rank <= 3 && (
-                  <div className="absolute inset-0 blur-lg bg-gradient-to-r from-primary/30 to-accent/30 -z-10" />
-                )}
-              </div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">XP</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom accent line for top 3 */}
-        {rank <= 3 && (
+  const MultiplierLegend = () => (
+    <div className="mb-6 p-4 rounded-xl border border-border bg-card/60">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">XP Multipliers</p>
+      <div className="flex flex-wrap gap-2">
+        {exerciseTypes.map((ex) => (
           <div
-            className={`h-1 w-full ${
-              rank === 1
-                ? "bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400"
-                : rank === 2
-                  ? "bg-gradient-to-r from-slate-300 via-slate-400 to-slate-300"
-                  : "bg-gradient-to-r from-amber-600 via-amber-700 to-amber-600"
-            }`}
-          />
-        )}
-      </div>
-    )
-  }
-
-  const renderLeaderboard = (data: LeaderboardEntry[] | null, exerciseName: string, exerciseType: string) => {
-    if (loading[exerciseType]) {
-      return (
-        <div className="relative p-12 rounded-xl border-2 border-border bg-card text-center overflow-hidden">
-          {/* Loading animation */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-pulse" />
-          <Loader2 className="h-12 w-12 text-primary mx-auto mb-3 animate-spin" />
-          <p className="text-muted-foreground font-medium">Loading warriors...</p>
-        </div>
-      )
-    }
-
-    if (!data || data.length === 0) {
-      return (
-        <div className="relative p-12 rounded-xl border-2 border-dashed border-border bg-card/50 text-center">
-          <Trophy className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-          <p className="text-xl font-bold text-muted-foreground mb-2">No Champions Yet</p>
-          <p className="text-sm text-muted-foreground">Be the first to claim the throne!</p>
-        </div>
-      )
-    }
-
-    return (
-      <div className="space-y-3">
-        {/* Top 3 podium section */}
-        {data.length >= 3 && (
-          <div className="grid grid-cols-3 gap-2 mb-6">
-            {/* 2nd place */}
-            <div className="flex flex-col items-center pt-8">
-              <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-slate-300 to-slate-500 flex items-center justify-center shadow-lg mb-2">
-                <Medal className="h-8 w-8 text-slate-800" />
-              </div>
-              <p className="text-sm font-bold truncate max-w-full">@{data[1].username}</p>
-              <p className="text-lg font-black text-slate-400">{data[1].total_reps.toLocaleString()}</p>
-              <div className="w-full h-20 bg-gradient-to-t from-slate-500 to-slate-400 rounded-t-lg mt-2 border border-slate-400/50" />
-            </div>
-
-            {/* 1st place */}
-            <div className="flex flex-col items-center">
-              <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 mb-2 animate-pulse">
-                <Crown className="h-10 w-10 text-yellow-900" />
-              </div>
-              <p className="text-sm font-bold truncate max-w-full">@{data[0].username}</p>
-              <p className="text-xl font-black text-yellow-500">{data[0].total_reps.toLocaleString()}</p>
-              <div className="w-full h-28 bg-gradient-to-t from-yellow-600 to-yellow-500 rounded-t-lg mt-2 border border-yellow-500/50" />
-            </div>
-
-            {/* 3rd place */}
-            <div className="flex flex-col items-center pt-12">
-              <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center shadow-lg mb-2">
-                <Award className="h-7 w-7 text-amber-200" />
-              </div>
-              <p className="text-sm font-bold truncate max-w-full">@{data[2].username}</p>
-              <p className="text-lg font-black text-amber-600">{data[2].total_reps.toLocaleString()}</p>
-              <div className="w-full h-16 bg-gradient-to-t from-amber-800 to-amber-700 rounded-t-lg mt-2 border border-amber-700/50" />
-            </div>
+            key={ex.id}
+            className="flex items-center gap-1.5 bg-background/70 border border-border rounded-lg px-3 py-1.5"
+          >
+            {ex.icon && <span className="text-base">{ex.icon}</span>}
+            <span className="text-sm font-medium">{ex.display_name}</span>
+            <span className="text-xs text-primary font-bold">{ex.xp_multiplier}×</span>
+            <span className="text-xs text-muted-foreground">/ {unitLabel(ex.measurement_type)}</span>
           </div>
-        )}
-
-        {/* Rankings list */}
-        <div className="space-y-2">{data.map((entry, index) => renderLeaderboardEntry(entry, index))}</div>
+        ))}
       </div>
-    )
-  }
+    </div>
+  )
+
+  // ── Tab bar ────────────────────────────────────────────────────────────────
+
+  const TabBar = () => (
+    <div className="mb-6 overflow-x-auto">
+      <div className="flex gap-1 min-w-max bg-card border border-border rounded-xl p-1">
+        {/* Combined tab */}
+        <button
+          onClick={() => setActiveTab(COMBINED_TAB)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+            activeTab === COMBINED_TAB
+              ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/60"
+          }`}
+        >
+          <Trophy className="h-4 w-4" />
+          Combined
+        </button>
+
+        {/* Per-exercise tabs */}
+        {exerciseTypes.map((ex) => (
+          <button
+            key={ex.id}
+            onClick={() => setActiveTab(ex.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === ex.id
+                ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/60"
+            }`}
+          >
+            {ex.icon ? <span className="text-base leading-none">{ex.icon}</span> : <Dumbbell className="h-4 w-4" />}
+            {ex.display_name}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+
+  // ── Page ───────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -376,7 +494,6 @@ export default function LeaderboardPage() {
           </Link>
 
           <div className="relative p-6 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border-2 border-border overflow-hidden">
-            {/* Decorative elements */}
             <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-primary rounded-tl" />
             <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-primary rounded-tr" />
             <div className="absolute bottom-0 left-0 w-4 h-4 border-l-2 border-b-2 border-primary rounded-bl" />
@@ -394,31 +511,32 @@ export default function LeaderboardPage() {
           </div>
         </div>
 
-        {/* Select Exercise Dropdown */}
-        {!exerciseTypesLoading && (
-          <div className="mb-6">
-            <ExerciseSelector exerciseTypes={exerciseTypes} value={activeTab} onValueChange={setActiveTab} />
-          </div>
-        )}
-
-        {/* Leaderboard Content */}
         {exerciseTypesLoading ? (
-          <div className="relative p-12 rounded-xl border-2 border-border bg-card text-center overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-pulse" />
-            <Loader2 className="h-12 w-12 text-primary mx-auto mb-3 animate-spin" />
-            <p className="text-muted-foreground font-medium">Loading warriors...</p>
-          </div>
+          <LoadingState />
         ) : (
-          activeTab &&
-          renderLeaderboard(
-            leaderboardData[activeTab] || null,
-            exerciseTypes.find((e) => e.id === activeTab)?.display_name || "",
-            activeTab,
-          )
+          <>
+            {/* XP multiplier legend — only shown on the combined tab */}
+            {activeTab === COMBINED_TAB && <MultiplierLegend />}
+
+            {/* Sub-leaderboard context pill — only shown on exercise tabs */}
+            {activeTab !== COMBINED_TAB && (
+              <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="px-3 py-1 bg-card border border-border rounded-full font-medium">
+                  Raw {unitLabel(exerciseTypes.find((e) => e.id === activeTab)?.measurement_type ?? null)} — no XP weighting
+                </span>
+              </div>
+            )}
+
+            {/* Tab bar */}
+            <TabBar />
+
+            {/* Board content */}
+            {activeTab === COMBINED_TAB ? renderCombinedBoard() : renderSubBoard(activeTab)}
+          </>
         )}
       </div>
 
-      {/* Floating action button for logging workouts */}
+      {/* Floating action button */}
       {currentUserId && (
         <>
           <Button
@@ -433,12 +551,11 @@ export default function LeaderboardPage() {
             onOpenChange={setShowAddDialog}
             onAdd={handleAddWorkout}
             exerciseTypes={exerciseTypes}
-            defaultExerciseType={activeTab}
+            defaultExerciseType={activeTab === COMBINED_TAB ? (exerciseTypes[0]?.id ?? "") : activeTab}
           />
         </>
       )}
 
-      {/* Footer */}
       <Footer />
     </div>
   )
