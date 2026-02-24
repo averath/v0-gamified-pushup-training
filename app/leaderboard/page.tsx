@@ -58,6 +58,19 @@ function unitLabel(measurementType: string | null): string {
   return "reps"
 }
 
+// For the XP legend, show the multiplier scaled to a human-friendly rate.
+// Running is stored in minutes but we display "2× / hr" (multiplier × 60).
+function legendMultiplierLabel(xpMultiplier: number, measurementType: string | null): string {
+  if (measurementType === "minutes") {
+    const perHour = Math.round(xpMultiplier * 60 * 100) / 100
+    return `${perHour}× / hr`
+  }
+  if (measurementType === "seconds") {
+    return `${xpMultiplier}× / sec`
+  }
+  return `${xpMultiplier}× / rep`
+}
+
 function getLevelIcon(level: number) {
   if (level >= 50) return <Flame className="h-4 w-4 text-red-500" />
   if (level >= 30) return <Zap className="h-4 w-4 text-yellow-500" />
@@ -415,7 +428,7 @@ export default function LeaderboardPage() {
     )
   }
 
-  // ── XP multiplier legend ───────────────────────────────────────────────────
+  // ── XP multiplier legend ────────────────────────────────────────────────���──
 
   const MultiplierLegend = () => (
     <div className="mb-6 p-4 rounded-xl border border-border bg-card/60">
@@ -428,8 +441,7 @@ export default function LeaderboardPage() {
           >
             {ex.icon && <span className="text-base">{ex.icon}</span>}
             <span className="text-sm font-medium">{ex.display_name}</span>
-            <span className="text-xs text-primary font-bold">{ex.xp_multiplier}×</span>
-            <span className="text-xs text-muted-foreground">/ {unitLabel(ex.measurement_type)}</span>
+            <span className="text-xs text-primary font-bold">{legendMultiplierLabel(ex.xp_multiplier, ex.measurement_type)}</span>
           </div>
         ))}
       </div>
