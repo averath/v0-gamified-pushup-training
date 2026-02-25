@@ -327,33 +327,31 @@ export default function LeaderboardPage() {
     fetchExerciseTypes()
   }, [])
 
-  // Fetch combined leaderboard
+  // Fetch combined leaderboard via API route (uses service role to bypass RLS)
   const fetchCombined = useCallback(async () => {
     setCombinedLoading(true)
-    const { data } = await supabase
-      .from("combined_leaderboard")
-      .select("id, username, total_xp, workout_count")
-      .order("total_xp", { ascending: false })
-      .limit(100)
-    setCombinedData((data || []) as CombinedEntry[])
+    try {
+      const res = await fetch("/api/leaderboard/combined")
+      const data = await res.json()
+      setCombinedData(Array.isArray(data) ? (data as CombinedEntry[]) : [])
+    } catch {
+      setCombinedData([])
+    }
     setCombinedLoading(false)
-  }, [supabase])
+  }, [])
 
-  // Fetch one exercise sub-leaderboard
-  const fetchSub = useCallback(
-    async (exerciseId: string) => {
-      setSubLoading((prev) => ({ ...prev, [exerciseId]: true }))
-      const { data } = await supabase
-        .from("leaderboard_stats")
-        .select("id, username, exercise_type, total_reps, workout_count")
-        .eq("exercise_type", exerciseId)
-        .order("total_reps", { ascending: false })
-        .limit(100)
-      setSubData((prev) => ({ ...prev, [exerciseId]: (data || []) as SubEntry[] }))
-      setSubLoading((prev) => ({ ...prev, [exerciseId]: false }))
-    },
-    [supabase],
-  )
+  // Fetch one exercise sub-leaderboard via API route (uses service role to bypass RLS)
+  const fetchSub = useCallback(async (exerciseId: string) => {
+    setSubLoading((prev) => ({ ...prev, [exerciseId]: true }))
+    try {
+      const res = await fetch(`/api/leaderboard/exercise?id=${encodeURIComponent(exerciseId)}`)
+      const data = await res.json()
+      setSubData((prev) => ({ ...prev, [exerciseId]: Array.isArray(data) ? (data as SubEntry[]) : [] }))
+    } catch {
+      setSubData((prev) => ({ ...prev, [exerciseId]: [] }))
+    }
+    setSubLoading((prev) => ({ ...prev, [exerciseId]: false }))
+  }, [])
 
   // Lazy-load data when tab changes
   useEffect(() => {
