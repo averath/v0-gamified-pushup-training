@@ -10,29 +10,28 @@ const nextConfig = {
     unoptimized: true,
   },
   async headers() {
+    const ONE_WEEK = 60 * 60 * 24 * 7 // 604800 seconds
+
     return [
       {
-        // Apply no-cache headers to all HTML pages so browsers always fetch
-        // the latest document and discover new JS/CSS chunk URLs.
+        // HTML pages: allow caching for one week, but revalidate in the
+        // background so returning visitors always get fresh content.
         source: "/(.*)",
         headers: [
           {
             key: "Cache-Control",
-            value: "no-cache, no-store, must-revalidate",
+            value: `public, max-age=${ONE_WEEK}, stale-while-revalidate=${ONE_WEEK}`,
           },
-          { key: "Pragma", value: "no-cache" },
-          { key: "Expires", value: "0" },
         ],
       },
       {
-        // Next.js JS/CSS chunks already have content-hashed filenames, so
-        // long-term caching is safe for them — but if you want to be extra
-        // aggressive you can override here too.
+        // Next.js JS/CSS chunks have content-hashed filenames — cache them
+        // aggressively for one week (they auto-bust on every deploy).
         source: "/_next/static/(.*)",
         headers: [
           {
             key: "Cache-Control",
-            value: "public, max-age=0, must-revalidate",
+            value: `public, max-age=${ONE_WEEK}, immutable`,
           },
         ],
       },
