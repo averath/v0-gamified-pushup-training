@@ -2,22 +2,26 @@
 
 import { useEffect } from "react"
 
+const CURRENT_CACHE_NAME = "lvl-up-v3"
+
 /**
- * Clears all entries from the browser Cache API (used by service workers /
- * PWA runtimes) so that stale assets are evicted on the next page load.
- * Also unregisters any active service workers so the fresh network response
- * is served immediately.
+ * Manages the browser Cache API used by service workers / PWA runtimes.
+ * Deletes all stale caches whose names start with "lvl-up-" but are not
+ * the current version, and unregisters any active service workers.
  */
 export function CacheManager() {
   useEffect(() => {
     async function bustCache() {
       try {
-        // 1. Delete every named cache in the Cache Storage API
+        // 1. Delete stale lvl-up-* caches, keeping the current version
         if ("caches" in window) {
           const cacheNames = await caches.keys()
-          await Promise.all(cacheNames.map((name) => caches.delete(name)))
-          if (cacheNames.length > 0) {
-            console.log("[CacheManager] Cleared caches:", cacheNames)
+          const staleCaches = cacheNames.filter(
+            (name) => name.startsWith("lvl-up-") && name !== CURRENT_CACHE_NAME
+          )
+          await Promise.all(staleCaches.map((name) => caches.delete(name)))
+          if (staleCaches.length > 0) {
+            console.log("[CacheManager] Cleared stale caches:", staleCaches)
           }
         }
 
