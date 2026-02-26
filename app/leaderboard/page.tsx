@@ -15,9 +15,18 @@ import {
   Flame,
   Shield,
   Dumbbell,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { useEffect, useState, useCallback } from "react"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
 import { Footer } from "@/components/footer"
@@ -428,62 +437,118 @@ export default function LeaderboardPage() {
     )
   }
 
-  // ── XP multiplier legend ────────────────────────────────────────────────���──
+  // ── XP multiplier legend (accordion) ──────────────────────────────────────
 
-  const MultiplierLegend = () => (
-    <div className="mb-6 p-4 rounded-xl border border-border bg-card/60">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">XP Multipliers</p>
-      <div className="flex flex-wrap gap-2">
-        {exerciseTypes.map((ex) => (
-          <div
-            key={ex.id}
-            className="flex items-center gap-1.5 bg-background/70 border border-border rounded-lg px-3 py-1.5"
-          >
-            {ex.icon && <span className="text-base">{ex.icon}</span>}
-            <span className="text-sm font-medium">{ex.display_name}</span>
-            <span className="text-xs text-primary font-bold">{legendMultiplierLabel(ex.xp_multiplier, ex.measurement_type)}</span>
+  const MultiplierLegend = () => {
+    const [open, setOpen] = useState(false)
+    return (
+      <div className="mb-6 rounded-xl border border-border bg-card/60 overflow-hidden">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-background/40 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">XP Multipliers</span>
           </div>
-        ))}
+          {open ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
+        </button>
+        {open && (
+          <div className="px-4 pb-4 pt-1 border-t border-border">
+            <div className="flex flex-wrap gap-2 mt-2">
+              {exerciseTypes.map((ex) => (
+                <div
+                  key={ex.id}
+                  className="flex items-center gap-1.5 bg-background/70 border border-border rounded-lg px-3 py-1.5"
+                >
+                  {ex.icon && <span className="text-base">{ex.icon}</span>}
+                  <span className="text-sm font-medium">{ex.display_name}</span>
+                  <span className="text-xs text-primary font-bold">
+                    {legendMultiplierLabel(ex.xp_multiplier, ex.measurement_type)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  )
+    )
+  }
 
-  // ── Tab bar ────────────────────────────────────────────────────────────────
+  // ── Tab bar (Combined button + exercise dropdown) ──────────────────────────
 
-  const TabBar = () => (
-    <div className="mb-6 overflow-x-auto">
-      <div className="flex gap-1 min-w-max bg-card border border-border rounded-xl p-1">
+  const TabBar = () => {
+    const activeExercise = exerciseTypes.find((e) => e.id === activeTab)
+
+    return (
+      <div className="mb-6 flex items-center gap-2 flex-wrap">
         {/* Combined tab */}
         <button
           onClick={() => setActiveTab(COMBINED_TAB)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
             activeTab === COMBINED_TAB
-              ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow"
-              : "text-muted-foreground hover:text-foreground hover:bg-background/60"
+              ? "bg-gradient-to-r from-primary to-accent text-primary-foreground border-transparent shadow"
+              : "border-border text-muted-foreground hover:text-foreground hover:bg-card"
           }`}
         >
           <Trophy className="h-4 w-4" />
           Combined
         </button>
 
-        {/* Per-exercise tabs */}
-        {exerciseTypes.map((ex) => (
-          <button
-            key={ex.id}
-            onClick={() => setActiveTab(ex.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeTab === ex.id
-                ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow"
-                : "text-muted-foreground hover:text-foreground hover:bg-background/60"
-            }`}
-          >
-            {ex.icon ? <span className="text-base leading-none">{ex.icon}</span> : <Dumbbell className="h-4 w-4" />}
-            {ex.display_name}
-          </button>
-        ))}
+        {/* Exercise dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
+                activeTab !== COMBINED_TAB
+                  ? "bg-gradient-to-r from-primary to-accent text-primary-foreground border-transparent shadow"
+                  : "border-border text-muted-foreground hover:text-foreground hover:bg-card"
+              }`}
+            >
+              {activeExercise ? (
+                <>
+                  {activeExercise.icon ? (
+                    <span className="text-base leading-none">{activeExercise.icon}</span>
+                  ) : (
+                    <Dumbbell className="h-4 w-4" />
+                  )}
+                  {activeExercise.display_name}
+                </>
+              ) : (
+                <>
+                  <Dumbbell className="h-4 w-4" />
+                  Exercises
+                </>
+              )}
+              <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-44">
+            {exerciseTypes.map((ex, i) => (
+              <span key={ex.id}>
+                {i > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuItem
+                  onClick={() => setActiveTab(ex.id)}
+                  className={`flex items-center gap-2 cursor-pointer ${activeTab === ex.id ? "bg-accent text-accent-foreground" : ""}`}
+                >
+                  {ex.icon ? (
+                    <span className="text-base leading-none">{ex.icon}</span>
+                  ) : (
+                    <Dumbbell className="h-4 w-4" />
+                  )}
+                  <span>{ex.display_name}</span>
+                </DropdownMenuItem>
+              </span>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-    </div>
-  )
+    )
+  }
 
   // ── Page ───────────────────────────────────────────────────────────────────
 
