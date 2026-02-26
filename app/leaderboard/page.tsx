@@ -565,7 +565,7 @@ export default function LeaderboardPage() {
                 <Trophy className="h-9 w-9 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-4xl font-black tracking-tight">HALL OF FAME</h1>
+                <h1 className="text-2xl font-black tracking-tight">HALL OF FAME</h1>
                 <p className="text-muted-foreground font-medium">Top Training Champions</p>
               </div>
             </div>
