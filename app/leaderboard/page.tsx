@@ -479,55 +479,39 @@ export default function LeaderboardPage() {
     )
   }
 
-  // ── Tab bar (Combined button + exercise dropdown) ──────────────────────────
+  // ── Tab bar (single dropdown for Combined + exercises) ────────────────────
 
   const TabBar = () => {
     const activeExercise = exerciseTypes.find((e) => e.id === activeTab)
+    const activeLabel = activeTab === COMBINED_TAB ? "Combined" : activeExercise?.display_name ?? "Select"
+    const activeIcon =
+      activeTab === COMBINED_TAB ? (
+        <Trophy className="h-4 w-4" />
+      ) : activeExercise?.icon ? (
+        <span className="text-base leading-none">{activeExercise.icon}</span>
+      ) : (
+        <Dumbbell className="h-4 w-4" />
+      )
 
     return (
-      <div className="mb-6 flex items-center gap-2 flex-wrap">
-        {/* Combined tab */}
-        <button
-          onClick={() => setActiveTab(COMBINED_TAB)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
-            activeTab === COMBINED_TAB
-              ? "bg-gradient-to-r from-primary to-accent text-primary-foreground border-transparent shadow"
-              : "border-border text-muted-foreground hover:text-foreground hover:bg-card"
-          }`}
-        >
-          <Trophy className="h-4 w-4" />
-          Combined
-        </button>
-
-        {/* Exercise dropdown */}
+      <div className="mb-6">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
-                activeTab !== COMBINED_TAB
-                  ? "bg-gradient-to-r from-primary to-accent text-primary-foreground border-transparent shadow"
-                  : "border-border text-muted-foreground hover:text-foreground hover:bg-card"
-              }`}
-            >
-              {activeExercise ? (
-                <>
-                  {activeExercise.icon ? (
-                    <span className="text-base leading-none">{activeExercise.icon}</span>
-                  ) : (
-                    <Dumbbell className="h-4 w-4" />
-                  )}
-                  {activeExercise.display_name}
-                </>
-              ) : (
-                <>
-                  <Dumbbell className="h-4 w-4" />
-                  Exercises
-                </>
-              )}
-              <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+            <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border border-border bg-card hover:bg-background/60 transition-colors">
+              {activeIcon}
+              {activeLabel}
+              <ChevronDown className="h-3.5 w-3.5 opacity-70 ml-1" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-44">
+            <DropdownMenuItem
+              onClick={() => setActiveTab(COMBINED_TAB)}
+              className={`flex items-center gap-2 cursor-pointer ${activeTab === COMBINED_TAB ? "bg-accent text-accent-foreground" : ""}`}
+            >
+              <Trophy className="h-4 w-4" />
+              <span>Combined</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             {exerciseTypes.map((ex, i) => (
               <span key={ex.id}>
                 {i > 0 && <DropdownMenuSeparator />}
