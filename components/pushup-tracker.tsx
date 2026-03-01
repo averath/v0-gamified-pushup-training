@@ -355,6 +355,7 @@ export function PushupTracker({
             workouts={questWorkouts}
             exerciseType={activeExercise}
             exerciseName={getExerciseName(activeExercise)}
+            currentLevel={levelData.currentLevel}
             onClaimXP={handleClaimQuestXP}
           />
         </div>
