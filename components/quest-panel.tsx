@@ -36,6 +36,7 @@ interface QuestPanelProps {
   workouts: Workout[]
   exerciseType: string
   exerciseName: string
+  currentLevel: number
   onClaimXP?: (questId: string, xpAmount: number) => void
 }
 
@@ -58,16 +59,54 @@ interface Quest {
   tier: "normal" | "hard" | "epic"
 }
 
-function getClaimedQuestsKey(type: "daily" | "weekly"): string {
+function getPeriodKey(type: "daily" | "weekly"): string {
   const now = new Date()
   if (type === "daily") {
-    return `claimed-quests-daily-${now.toISOString().split("T")[0]}`
+    return now.toISOString().split("T")[0]
   } else {
     const dayOfWeek = now.getDay()
     const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
     const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysFromMonday)
-    return `claimed-quests-weekly-${startOfWeek.toISOString().split("T")[0]}`
+    return startOfWeek.toISOString().split("T")[0]
   }
+}
+
+function getClaimedQuestsKey(type: "daily" | "weekly"): string {
+  return `claimed-quests-${type}-${getPeriodKey(type)}`
+}
+
+/**
+ * Returns the level the player had at the start of the current period.
+ * If the player has leveled up since then, returns the new level and updates the stored value.
+ */
+function getLevelAtPeriodStart(type: "daily" | "weekly", currentLevel: number): number {
+  const key = `level-at-period-start-${type}-${getPeriodKey(type)}`
+  const stored = localStorage.getItem(key)
+  if (stored === null) {
+    // First visit this period — store current level
+    localStorage.setItem(key, String(currentLevel))
+    return currentLevel
+  }
+  return Number(stored)
+}
+
+/**
+ * For a given period type, returns the set of quest ids that are locked due to no level-up.
+ * Upgraded quests whose prerequisite was claimed in the PREVIOUS period but no level-up
+ * occurred are stripped — the chains reset to tier 1.
+ *
+ * Within the CURRENT period this is irrelevant because claims naturally expire per period key.
+ * The only thing we need to handle is: if the player claimed an upgrade quest in this period
+ * but then the period passed without a level-up, the NEXT period they should start at tier 1.
+ *
+ * Since keys are period-scoped, this is automatic. What we DO need to enforce is:
+ * if the player has NOT leveled up since the period started, show a warning on upgraded quests.
+ */
+function hasPeriodLevelUp(type: "daily" | "weekly", currentLevel: number): boolean {
+  const key = `level-at-period-start-${type}-${getPeriodKey(type)}`
+  const stored = localStorage.getItem(key)
+  if (stored === null) return false
+  return currentLevel > Number(stored)
 }
 
 const TIER_STYLES: Record<Quest["tier"], { border: string; bg: string; badge: string; label: string }> = {
@@ -91,8 +130,10 @@ const TIER_STYLES: Record<Quest["tier"], { border: string; bg: string; badge: st
   },
 }
 
-export function QuestPanel({ workouts, exerciseType, exerciseName, onClaimXP }: QuestPanelProps) {
+export function QuestPanel({ workouts, exerciseType, exerciseName, currentLevel, onClaimXP }: QuestPanelProps) {
   const [claimedQuests, setClaimedQuests] = useState<Set<string>>(new Set())
+  const [dailyLeveledUp, setDailyLeveledUp] = useState(false)
+  const [weeklyLeveledUp, setWeeklyLeveledUp] = useState(false)
 
   useEffect(() => {
     const dailyKey = getClaimedQuestsKey("daily")
@@ -100,7 +141,13 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, onClaimXP }: 
     const dailyClaimed = JSON.parse(localStorage.getItem(dailyKey) || "[]")
     const weeklyClaimed = JSON.parse(localStorage.getItem(weeklyKey) || "[]")
     setClaimedQuests(new Set([...dailyClaimed, ...weeklyClaimed]))
-  }, [])
+
+    // Track level at start of each period and detect level-ups
+    getLevelAtPeriodStart("daily", currentLevel)
+    getLevelAtPeriodStart("weekly", currentLevel)
+    setDailyLeveledUp(hasPeriodLevelUp("daily", currentLevel))
+    setWeeklyLeveledUp(hasPeriodLevelUp("weekly", currentLevel))
+  }, [currentLevel])
 
   const handleClaimQuest = useCallback(
     (quest: Quest) => {
@@ -120,6 +167,9 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, onClaimXP }: 
     },
     [exerciseType, onClaimXP],
   )
+
+  // After claiming XP, re-check level-up status (parent updates currentLevel, which triggers the useEffect)
+  // This is handled automatically via the [currentLevel] dep in useEffect above
 
   const quests = useMemo(() => {
     const now = new Date()
@@ -398,32 +448,39 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, onClaimXP }: 
     ]
 
     // Filter out locked quests (unlockedBy quest is not yet claimed)
-    // and apply unlock logic: upgraded quests are only visible once their predecessor is claimed
+    // and apply unlock logic: upgraded quests are only visible once their predecessor is claimed.
+    // Additionally, if the player has NOT leveled up this period, upgraded (tier 2+) quests
+    // that were unlocked by claiming a lower quest are reset — they require a level-up to access
+    // the harder tier in the next period.
     const allQuests = [...dailyQuests, ...weeklyQuests]
 
     return allQuests.map((q) => {
       if (q.unlockedBy) {
         const prerequisiteKey = `${q.unlockedBy}-${exerciseType}`
-        const isUnlocked = claimedQuests.has(prerequisiteKey)
-        return { ...q, _locked: !isUnlocked }
+        const prerequisiteClaimed = claimedQuests.has(prerequisiteKey)
+        // Gate: the upgrade is only accessible if the prerequisite was claimed AND
+        // the player leveled up during this period (proving they earned the harder challenge).
+        const periodLeveledUp = q.type === "daily" ? dailyLeveledUp : weeklyLeveledUp
+        const isUnlocked = prerequisiteClaimed && periodLeveledUp
+        return { ...q, _locked: !isUnlocked, _needsLevelUp: prerequisiteClaimed && !periodLeveledUp }
       }
-      return { ...q, _locked: false }
-    }) as (Quest & { _locked: boolean })[]
-  }, [workouts, exerciseType, exerciseName, claimedQuests])
+      return { ...q, _locked: false, _needsLevelUp: false }
+    }) as (Quest & { _locked: boolean; _needsLevelUp: boolean })[]
+  }, [workouts, exerciseType, exerciseName, claimedQuests, dailyLeveledUp, weeklyLeveledUp])
 
   const dailyQuests = quests.filter((q) => q.type === "daily")
   const weeklyQuests = quests.filter((q) => q.type === "weekly")
 
-  const visibleDaily = dailyQuests.filter((q) => !(q as any)._locked)
-  const visibleWeekly = weeklyQuests.filter((q) => !(q as any)._locked)
+  const visibleDaily = dailyQuests.filter((q) => !(q as any)._locked || (q as any)._needsLevelUp)
+  const visibleWeekly = weeklyQuests.filter((q) => !(q as any)._locked || (q as any)._needsLevelUp)
 
-  const completedCount = quests.filter((q) => q.completed && !(q as any)._locked).length
-  const totalVisible = quests.filter((q) => !(q as any)._locked).length
-  const claimableCount = quests.filter((q) => q.completed && !q.claimed && !(q as any)._locked).length
+  const completedCount = quests.filter((q) => q.completed && !(q as any)._locked && !(q as any)._needsLevelUp).length
+  const totalVisible = quests.filter((q) => !(q as any)._locked && !(q as any)._needsLevelUp).length
+  const claimableCount = quests.filter((q) => q.completed && !q.claimed && !(q as any)._locked && !(q as any)._needsLevelUp).length
 
   // Group quests by chain for rendering
-  const groupByChain = (questList: (Quest & { _locked: boolean })[]) => {
-    const chains: (Quest & { _locked: boolean })[][] = []
+  const groupByChain = (questList: (Quest & { _locked: boolean; _needsLevelUp: boolean })[]) => {
+    const chains: (Quest & { _locked: boolean; _needsLevelUp: boolean })[][] = []
     const inChain = new Set<string>()
 
     questList.forEach((q) => {
@@ -431,11 +488,11 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, onClaimXP }: 
       if (q.upgradeOf) return // will be picked up by the chain root
 
       // Start a chain from this quest
-      const chain: (Quest & { _locked: boolean })[] = [q]
+      const chain: (Quest & { _locked: boolean; _needsLevelUp: boolean })[] = [q]
       inChain.add(q.id)
 
       // Walk forward through upgrades
-      let current: Quest & { _locked: boolean } = q
+      let current: Quest & { _locked: boolean; _needsLevelUp: boolean } = q
       // eslint-disable-next-line no-constant-condition
       while (true) {
         const next = questList.find((x) => x.upgradeOf === current.id)
@@ -512,8 +569,8 @@ function QuestChain({
   chain,
   onClaim,
 }: {
-  chain: (Quest & { _locked: boolean })[]
-  onClaim: (q: Quest & { _locked: boolean }) => void
+  chain: (Quest & { _locked: boolean; _needsLevelUp: boolean })[]
+  onClaim: (q: Quest & { _locked: boolean; _needsLevelUp: boolean }) => void
 }) {
   if (chain.length === 1) {
     return <QuestItem quest={chain[0]} onClaim={() => onClaim(chain[0])} />
@@ -542,15 +599,44 @@ function QuestItem({
   quest,
   onClaim,
 }: {
-  quest: Quest & { _locked: boolean }
+  quest: Quest & { _locked: boolean; _needsLevelUp: boolean }
   onClaim: () => void
 }) {
   const progressPercent = Math.min((quest.progress / quest.target) * 100, 100)
   const canClaim = quest.completed && !quest.claimed
   const isLocked = quest._locked
+  const needsLevelUp = quest._needsLevelUp
   const tierStyle = TIER_STYLES[quest.tier]
 
   if (isLocked) {
+    // Two sub-states: needs level-up (prerequisite was claimed but no level-up yet)
+    // vs simply not yet unlocked (prerequisite not claimed)
+    if (needsLevelUp) {
+      return (
+        <div className="relative p-3 rounded-lg border border-dashed border-destructive/30 bg-destructive/5 opacity-80">
+          <div className="flex items-center gap-3">
+            <Timer className="w-4 h-4 text-destructive/50 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground/70 truncate">{quest.title}</span>
+                {tierStyle.label && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${tierStyle.badge}`}>
+                    {tierStyle.label}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-destructive/60 mt-0.5 font-medium">
+                Level up this period to unlock this challenge
+              </p>
+            </div>
+            <div className="flex items-center gap-1 text-xs font-bold shrink-0 text-muted-foreground/40">
+              <Zap className="w-3 h-3" />+{quest.xpReward} XP
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="relative p-3 rounded-lg border border-dashed border-border/40 bg-background/20 opacity-60">
         <div className="flex items-center gap-3">
