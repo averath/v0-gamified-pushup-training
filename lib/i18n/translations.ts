@@ -1,5 +1,13 @@
 export const translations = {
   en: {
+    workoutTypes: {
+      pushups: "Push-ups",
+      pullups: "Pull-ups",
+      squats: "Squats",
+      running: "Running",
+      planks: "Planks",
+      burpees: "Burpees",
+    },
     hero: {
       badge: "Level Up Your Fitness",
       title: {
@@ -50,6 +58,14 @@ export const translations = {
     },
   },
   pl: {
+    workoutTypes: {
+      pushups: "Pompki",
+      pullups: "Podciąganie",
+      squats: "Przysiady",
+      running: "Bieganie",
+      planks: "Deski",
+      burpees: "Burpees",
+    },
     hero: {
       badge: "Rozwijaj Swoją Formę",
       title: {
