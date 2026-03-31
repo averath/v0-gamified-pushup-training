@@ -6,6 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import { Suspense } from "react"
 import { CacheManager } from "@/components/cache-manager"
+import { LanguageProvider } from "@/lib/i18n/language-context"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -80,12 +81,14 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.svg" />
       </head>
       <body className={`font-sans ${inter.variable} ${jetbrainsMono.variable}`}>
-        <Suspense fallback={<div>Loading...</div>}>
-          <CacheManager />
-          {children}
-          <Analytics />
-          <SpeedInsights />
-        </Suspense>
+        <LanguageProvider>
+          <Suspense fallback={<div>Loading...</div>}>
+            <CacheManager />
+            {children}
+            <Analytics />
+            <SpeedInsights />
+          </Suspense>
+        </LanguageProvider>
       </body>
     </html>
   )
