@@ -28,6 +28,7 @@ import { ShareResultsDialog } from "@/components/share-results-dialog"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
 import { useSoundSettings } from "@/hooks/use-sound-settings"
 import { Footer } from "@/components/footer"
+import { useLanguage } from "@/lib/i18n/language-context"
 
 interface ExerciseType {
   id: string
@@ -77,6 +78,7 @@ export function PushupTracker({
 
   const [activeExercise, setActiveExercise] = useSelectedExercise(exerciseTypes)
   const { soundEnabled, toggleSound } = useSoundSettings()
+  const { t } = useLanguage()
 
   const handleAddPushups = async (count: number, exerciseType: string) => {
     setIsLoading(true)
@@ -194,6 +196,8 @@ export function PushupTracker({
   )
 
   const getExerciseName = (type: string) => {
+    const key = type as keyof typeof t.workoutTypes
+    if (t.workoutTypes[key]) return t.workoutTypes[key]
     const exercise = exerciseTypes.find((e) => e.id === type)
     return exercise?.display_name || "Reps"
   }

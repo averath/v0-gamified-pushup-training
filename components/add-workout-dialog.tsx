@@ -14,6 +14,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
+import { useLanguage } from "@/lib/i18n/language-context"
 
 interface ExerciseType {
   id: string
@@ -42,11 +43,17 @@ export function AddWorkoutDialog({
   exerciseTypes: propExerciseTypes,
   defaultExerciseType,
 }: AddWorkoutDialogProps) {
+  const { t } = useLanguage()
   const [internalOpen, setInternalOpen] = useState(false)
   const [count, setCount] = useState(10)
   const [exerciseType, setExerciseType] = useState<string>("pushups")
   const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([])
   const [loading, setLoading] = useState(true)
+
+  const getTranslatedExerciseName = (exercise: ExerciseType) => {
+    const key = exercise.id as keyof typeof t.workoutTypes
+    return t.workoutTypes[key] ?? exercise.display_name
+  }
 
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : internalOpen
@@ -113,12 +120,12 @@ export function AddWorkoutDialog({
   const getUnitName = () => {
     const exercise = exerciseTypes.find((e) => e.id === exerciseType)
     if (exercise?.measurement_type === "seconds") {
-      return count === 1 ? "Second" : "Seconds" // added seconds unit display
+      return count === 1 ? "Second" : "Seconds"
     }
     if (exercise?.measurement_type === "minutes") {
       return count === 1 ? "Minute" : "Minutes"
     }
-    return exercise?.display_name || "Reps"
+    return exercise ? getTranslatedExerciseName(exercise) : "Reps"
   }
 
   const dialogContent = (
@@ -139,7 +146,7 @@ export function AddWorkoutDialog({
                 {exerciseTypes.map((exercise) => (
                   <SelectItem key={exercise.id} value={exercise.id}>
                     {exercise.icon && <span className="mr-2">{exercise.icon}</span>}
-                    {exercise.display_name}
+                    {getTranslatedExerciseName(exercise)}
                   </SelectItem>
                 ))}
               </SelectContent>

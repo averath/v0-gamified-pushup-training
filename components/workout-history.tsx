@@ -1,6 +1,9 @@
+"use client"
+
 import type { WorkoutSession } from "@/lib/storage"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity } from "lucide-react"
+import { useLanguage } from "@/lib/i18n/language-context"
 
 interface WorkoutHistoryProps {
   sessions: WorkoutSession[]
@@ -8,6 +11,8 @@ interface WorkoutHistoryProps {
 }
 
 export function WorkoutHistory({ sessions, exerciseTypes = [] }: WorkoutHistoryProps) {
+  const { t } = useLanguage()
+
   const getExerciseDisplay = (session: WorkoutSession) => {
     const exerciseType = exerciseTypes.find((e) => e.id === session.exercise_type)
     const isTimeBased = exerciseType?.measurement_type === "minutes"
@@ -20,25 +25,20 @@ export function WorkoutHistory({ sessions, exerciseTypes = [] }: WorkoutHistoryP
       }
     }
 
-    // For rep-based exercises
-    let name = "rep"
-    switch (session.exercise_type) {
-      case "pushups":
-        name = "push-up"
-        break
-      case "pullups":
-        name = "pull-up"
-        break
-      case "squats":
-        name = "squat"
-        break
-      default:
-        name = exerciseType?.display_name?.toLowerCase() || "rep"
+    // For rep-based exercises, use translated name
+    const key = session.exercise_type as keyof typeof t.workoutTypes
+    const translatedName = t.workoutTypes[key] ?? exerciseType?.display_name ?? "Workout"
+    const singularMap: Record<string, string> = {
+      pushups: "push-up",
+      pullups: "pull-up",
+      squats: "squat",
+      burpees: "burpee",
     }
+    const baseWord = singularMap[session.exercise_type] ?? translatedName.toLowerCase()
 
     return {
-      text: `${value} ${name}${value !== 1 ? "s" : ""}`,
-      name: exerciseType?.display_name || "Workout",
+      text: `${value} ${baseWord}${value !== 1 ? "s" : ""}`,
+      name: translatedName,
     }
   }
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useLanguage } from "@/lib/i18n/language-context"
 
 interface ExerciseType {
   id: string
@@ -24,7 +25,13 @@ export function ExerciseSelector({
   label = "Select Exercise",
   className = "w-full max-w-xs",
 }: ExerciseSelectorProps) {
+  const { t } = useLanguage()
   const currentExercise = exerciseTypes.find((e) => e.id === value)
+
+  const getTranslatedName = (exercise: ExerciseType) => {
+    const key = exercise.id as keyof typeof t.workoutTypes
+    return t.workoutTypes[key] ?? exercise.display_name
+  }
 
   return (
     <div>
@@ -34,7 +41,7 @@ export function ExerciseSelector({
           <SelectValue>
             <div className="flex items-center gap-2">
               {currentExercise?.icon && <span>{currentExercise.icon}</span>}
-              <span>{currentExercise?.display_name || "Select exercise"}</span>
+              <span>{currentExercise ? getTranslatedName(currentExercise) : "Select exercise"}</span>
             </div>
           </SelectValue>
         </SelectTrigger>
@@ -43,7 +50,7 @@ export function ExerciseSelector({
             <SelectItem key={exercise.id} value={exercise.id}>
               <div className="flex items-center gap-2">
                 {exercise.icon && <span>{exercise.icon}</span>}
-                <span>{exercise.display_name}</span>
+                <span>{getTranslatedName(exercise)}</span>
               </div>
             </SelectItem>
           ))}
