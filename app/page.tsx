@@ -53,6 +53,9 @@ function LandingPageContent() {
           <nav className="flex items-center gap-2">
             <InstallPWAButton />
             <LanguageSwitcher />
+            <Link href="/features">
+              <Button variant="ghost" className="hidden sm:inline-flex">Features</Button>
+            </Link>
             {user ? (
               <Link href="/dashboard">
                 <Button>{t.hero.cta.dashboard}</Button>
