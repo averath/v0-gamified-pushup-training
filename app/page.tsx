@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Trophy, TrendingUp, Users, Zap } from "lucide-react"
 import { Footer } from "@/components/footer"
-import { LanguageProvider, useLanguage } from "@/lib/i18n/language-context"
+import { useLanguage } from "@/lib/i18n/language-context"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { InstallPWAButton } from "@/components/install-pwa-button"
 import { useEffect, useState } from "react"
@@ -200,9 +200,5 @@ function LandingPageContent() {
 }
 
 export default function LandingPage() {
-  return (
-    <LanguageProvider>
-      <LandingPageContent />
-    </LanguageProvider>
-  )
+  return <LandingPageContent />
 }
