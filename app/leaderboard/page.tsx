@@ -61,6 +61,22 @@ interface SubEntry {
 
 const COMBINED_TAB = "__combined__"
 
+type TimePeriod = "all" | "year" | "month" | "week" | "day"
+
+const TIME_PERIODS: { value: TimePeriod; label: string; short: string }[] = [
+  { value: "all",   label: "All Time",   short: "All" },
+  { value: "year",  label: "Last Year",  short: "Year" },
+  { value: "month", label: "Last Month", short: "Month" },
+  { value: "week",  label: "Last Week",  short: "Week" },
+  { value: "day",   label: "Last Day",   short: "Day" },
+]
+
+function combinedViewName(period: TimePeriod): string {
+  if (period === "all") return "combined_leaderboard"
+  return `combined_leaderboard_${period}`
+}
+
+
 function unitLabel(measurementType: string | null): string {
   if (measurementType === "seconds") return "sec"
   if (measurementType === "minutes") return "min"
@@ -309,12 +325,17 @@ export default function LeaderboardPage() {
   const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([])
   const [exerciseTypesLoading, setExerciseTypesLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<string>(COMBINED_TAB)
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("all")
 
-  // Combined board data
-  const [combinedData, setCombinedData] = useState<CombinedEntry[] | null>(null)
-  const [combinedLoading, setCombinedLoading] = useState(false)
+  // Combined board data keyed by period
+  const [combinedData, setCombinedData] = useState<Record<TimePeriod, CombinedEntry[] | null>>({
+    all: null, year: null, month: null, week: null, day: null,
+  })
+  const [combinedLoading, setCombinedLoading] = useState<Record<TimePeriod, boolean>>({
+    all: false, year: false, month: false, week: false, day: false,
+  })
 
-  // Per-exercise board data keyed by exercise id
+  // Per-exercise board data keyed by "exerciseId:period"
   const [subData, setSubData] = useState<Record<string, SubEntry[] | null>>({})
   const [subLoading, setSubLoading] = useState<Record<string, boolean>>({})
 
@@ -336,53 +357,85 @@ export default function LeaderboardPage() {
     fetchExerciseTypes()
   }, [])
 
-  // Fetch combined leaderboard
-  const fetchCombined = useCallback(async () => {
-    setCombinedLoading(true)
+  // Fetch combined leaderboard for a specific period
+  const fetchCombined = useCallback(async (period: TimePeriod) => {
+    setCombinedLoading((prev) => ({ ...prev, [period]: true }))
+    const viewName = combinedViewName(period)
     const { data } = await supabase
-      .from("combined_leaderboard")
+      .from(viewName)
       .select("id, username, total_xp, workout_count")
       .order("total_xp", { ascending: false })
       .limit(100)
-    setCombinedData((data || []) as CombinedEntry[])
-    setCombinedLoading(false)
+    setCombinedData((prev) => ({ ...prev, [period]: (data || []) as CombinedEntry[] }))
+    setCombinedLoading((prev) => ({ ...prev, [period]: false }))
   }, [supabase])
 
-  // Fetch one exercise sub-leaderboard
+  // Fetch one exercise sub-leaderboard for a specific period
   const fetchSub = useCallback(
-    async (exerciseId: string) => {
-      setSubLoading((prev) => ({ ...prev, [exerciseId]: true }))
-      const { data } = await supabase
-        .from("leaderboard_stats")
-        .select("id, username, exercise_type, total_reps, workout_count")
+    async (exerciseId: string, period: TimePeriod) => {
+      const key = `${exerciseId}:${period}`
+      setSubLoading((prev) => ({ ...prev, [key]: true }))
+      let query = supabase
+        .from("workouts")
+        .select("user_id, value, exercise_type, profiles(id, username)")
         .eq("exercise_type", exerciseId)
-        .order("total_reps", { ascending: false })
-        .limit(100)
-      setSubData((prev) => ({ ...prev, [exerciseId]: (data || []) as SubEntry[] }))
-      setSubLoading((prev) => ({ ...prev, [exerciseId]: false }))
+        .eq("is_quest_reward", false)
+
+      if (period !== "all") {
+        const now = new Date()
+        let since: Date
+        if (period === "day")   since = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)
+        else if (period === "week")  since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        else if (period === "month") since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        else since = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+        query = query.gte("created_at", since.toISOString())
+      }
+
+      const { data } = await query
+
+      // Aggregate by user
+      const map: Record<string, { id: string; username: string; total_reps: number; workout_count: number; exercise_type: string }> = {}
+      if (data) {
+        for (const w of data as any[]) {
+          const profile = Array.isArray(w.profiles) ? w.profiles[0] : w.profiles
+          if (!profile) continue
+          const uid = profile.id as string
+          if (!map[uid]) {
+            map[uid] = { id: uid, username: profile.username, total_reps: 0, workout_count: 0, exercise_type: exerciseId }
+          }
+          map[uid].total_reps += w.value
+          map[uid].workout_count += 1
+        }
+      }
+
+      const sorted: SubEntry[] = Object.values(map).sort((a, b) => b.total_reps - a.total_reps).slice(0, 100)
+      setSubData((prev) => ({ ...prev, [key]: sorted }))
+      setSubLoading((prev) => ({ ...prev, [key]: false }))
     },
     [supabase],
   )
 
-  // Lazy-load data when tab changes
+  // Lazy-load data when tab or period changes
   useEffect(() => {
     if (activeTab === COMBINED_TAB) {
-      if (combinedData === null && !combinedLoading) fetchCombined()
+      if (combinedData[timePeriod] === null && !combinedLoading[timePeriod]) fetchCombined(timePeriod)
     } else {
-      if (subData[activeTab] === undefined && !subLoading[activeTab]) fetchSub(activeTab)
+      const key = `${activeTab}:${timePeriod}`
+      if (subData[key] === undefined && !subLoading[key]) fetchSub(activeTab, timePeriod)
     }
-  }, [activeTab, combinedData, combinedLoading, subData, subLoading, fetchCombined, fetchSub])
+  }, [activeTab, timePeriod, combinedData, combinedLoading, subData, subLoading, fetchCombined, fetchSub])
 
   // Invalidate + refresh current tab after a workout is added
   const handleWorkoutAdded = useCallback(async () => {
     if (activeTab === COMBINED_TAB) {
-      setCombinedData(null)
-      fetchCombined()
+      setCombinedData((prev) => ({ ...prev, [timePeriod]: null }))
+      fetchCombined(timePeriod)
     } else {
-      setSubData((prev) => ({ ...prev, [activeTab]: null }))
-      fetchSub(activeTab)
+      const key = `${activeTab}:${timePeriod}`
+      setSubData((prev) => ({ ...prev, [key]: null }))
+      fetchSub(activeTab, timePeriod)
     }
-  }, [activeTab, fetchCombined, fetchSub])
+  }, [activeTab, timePeriod, fetchCombined, fetchSub])
 
   const handleAddWorkout = async (count: number, exerciseType: string) => {
     try {
@@ -407,12 +460,13 @@ export default function LeaderboardPage() {
   // ── Render helpers ─────────────────────────────────────────────────────────
 
   const renderCombinedBoard = () => {
-    if (combinedLoading) return <LoadingState />
-    if (!combinedData || combinedData.length === 0) return <EmptyState />
+    if (combinedLoading[timePeriod]) return <LoadingState />
+    const data = combinedData[timePeriod]
+    if (!data || data.length === 0) return <EmptyState />
 
     return (
       <div className="space-y-2">
-        {combinedData.map((entry, i) => (
+        {data.map((entry, i) => (
           <CombinedRow key={entry.id} entry={entry} index={i} currentUserId={currentUserId} />
         ))}
       </div>
@@ -422,8 +476,9 @@ export default function LeaderboardPage() {
   const renderSubBoard = (exerciseId: string) => {
     const ex = exerciseTypes.find((e) => e.id === exerciseId)
     const unit = unitLabel(ex?.measurement_type ?? null)
-    const data = subData[exerciseId]
-    const loading = subLoading[exerciseId]
+    const key = `${exerciseId}:${timePeriod}`
+    const data = subData[key]
+    const loading = subLoading[key]
 
     if (loading) return <LoadingState />
     if (!data || data.length === 0) return <EmptyState />
@@ -478,6 +533,26 @@ export default function LeaderboardPage() {
       </div>
     )
   }
+
+  // ── Time period pill bar ───────────────────────────────────────────────────
+
+  const TimePeriodBar = () => (
+    <div className="flex items-center gap-1.5 mb-6 flex-wrap">
+      {TIME_PERIODS.map(({ value, short }) => (
+        <button
+          key={value}
+          onClick={() => setTimePeriod(value)}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+            timePeriod === value
+              ? "bg-primary text-primary-foreground border-primary shadow-sm"
+              : "bg-card text-muted-foreground border-border hover:bg-background/60 hover:text-foreground"
+          }`}
+        >
+          {short}
+        </button>
+      ))}
+    </div>
+  )
 
   // ── Tab bar (single dropdown for Combined + exercises) ────────────────────
 
@@ -587,6 +662,9 @@ export default function LeaderboardPage() {
                 </span>
               </div>
             )}
+
+            {/* Time period filter */}
+            <TimePeriodBar />
 
             {/* Tab bar */}
             <TabBar />
