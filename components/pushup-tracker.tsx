@@ -172,7 +172,7 @@ export function PushupTracker({
 
   const sessions = useMemo(
     () =>
-      workouts
+      allWorkouts
         .filter((w) => (w.exercise_type || "pushups") === activeExercise && !w.is_quest_reward)
         .map((w) => ({
           id: w.id,
@@ -180,7 +180,7 @@ export function PushupTracker({
           timestamp: new Date(w.created_at).getTime(),
           exercise_type: w.exercise_type || "pushups",
         })),
-    [workouts, activeExercise],
+    [allWorkouts, activeExercise],
   )
 
   const questWorkouts = useMemo(
@@ -380,7 +380,14 @@ export function PushupTracker({
           <StatsCard title="Workouts" value={currentWorkoutCount} icon={Zap} description="Sessions logged" />
         </div>
 
-        <WorkoutHistory sessions={sessions} />
+        <WorkoutHistory
+            sessions={sessions}
+            exerciseTypes={exerciseTypes.map((e) => ({
+              id: e.id,
+              display_name: e.display_name,
+              measurement_type: (e as any).measurement_type ?? "reps",
+            }))}
+          />
       </div>
 
       <AddWorkoutDialog
