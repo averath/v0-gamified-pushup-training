@@ -375,41 +375,18 @@ export default function LeaderboardPage() {
     async (exerciseId: string, period: TimePeriod) => {
       const key = `${exerciseId}:${period}`
       setSubLoading((prev) => ({ ...prev, [key]: true }))
-      let query = supabase
-        .from("workouts")
-        .select("user_id, value, exercise_type, profiles(id, username)")
+
+      // Use the pre-built security-definer views so RLS on workouts doesn't block cross-user data
+      const viewName = period === "all" ? "leaderboard_stats" : `leaderboard_stats_${period}`
+
+      const { data } = await supabase
+        .from(viewName)
+        .select("id, username, exercise_type, total_reps, workout_count")
         .eq("exercise_type", exerciseId)
-        .eq("is_quest_reward", false)
+        .order("total_reps", { ascending: false })
+        .limit(100)
 
-      if (period !== "all") {
-        const now = new Date()
-        let since: Date
-        if (period === "day")   since = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)
-        else if (period === "week")  since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        else if (period === "month") since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-        else since = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
-        query = query.gte("created_at", since.toISOString())
-      }
-
-      const { data } = await query
-
-      // Aggregate by user
-      const map: Record<string, { id: string; username: string; total_reps: number; workout_count: number; exercise_type: string }> = {}
-      if (data) {
-        for (const w of data as any[]) {
-          const profile = Array.isArray(w.profiles) ? w.profiles[0] : w.profiles
-          if (!profile) continue
-          const uid = profile.id as string
-          if (!map[uid]) {
-            map[uid] = { id: uid, username: profile.username, total_reps: 0, workout_count: 0, exercise_type: exerciseId }
-          }
-          map[uid].total_reps += w.value
-          map[uid].workout_count += 1
-        }
-      }
-
-      const sorted: SubEntry[] = Object.values(map).sort((a, b) => b.total_reps - a.total_reps).slice(0, 100)
-      setSubData((prev) => ({ ...prev, [key]: sorted }))
+      setSubData((prev) => ({ ...prev, [key]: (data || []) as SubEntry[] }))
       setSubLoading((prev) => ({ ...prev, [key]: false }))
     },
     [supabase],
