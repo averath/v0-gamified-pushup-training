@@ -200,20 +200,13 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, currentLevel,
 
     // All-time stats
     const allTimeBestSet = exerciseWorkouts.reduce((max, w) => Math.max(max, w.value), 0)
+    const preWeekBestSet = exerciseWorkouts
+      .filter((w) => w.timestamp < startOfWeek)
+      .reduce((max, w) => Math.max(max, w.value), 0)
 
     const isClaimed = (id: string) => claimedQuests.has(`${id}-${exerciseType}`)
 
     // ─── DAILY QUESTS ─────────────────────────────────────────────────────────
-
-    // Chain 1: Daily Grind → Daily Beast → Daily Legend
-    const dailyGrindClaimed = isClaimed("daily-reps")
-    const dailyBeastClaimed = isClaimed("daily-reps-hard")
-
-    // Chain 2: First Session → Triple Session
-    const firstSessionClaimed = isClaimed("daily-session")
-
-    // Chain 3: Big Set → Mega Set
-    const bigSetClaimed = isClaimed("daily-bigset")
 
     const dailyQuests: Quest[] = [
       // Chain 1 – rep volume
@@ -322,12 +315,6 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, currentLevel,
 
     // ─── WEEKLY QUESTS ────────────────────────────────────────────────────────
 
-    // Chain 1: consistency
-    const weeklyConsistencyClaimed = isClaimed("weekly-consistency")
-
-    // Chain 2: volume
-    const weeklyVolumeClaimed = isClaimed("weekly-volume")
-
     const weeklyQuests: Quest[] = [
       // Chain 1 – consistency
       {
@@ -435,11 +422,11 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, currentLevel,
       {
         id: "weekly-pb",
         title: "Personal Best",
-        description: `Hit a set of ${Math.max(30, weekBestSet + 5)} ${exerciseName.toLowerCase()} this week`,
+        description: `Hit a set of ${Math.max(30, preWeekBestSet + 5)} ${exerciseName.toLowerCase()} this week`,
         progress: weekBestSet,
-        target: Math.max(30, weekBestSet + 5),
+        target: Math.max(30, preWeekBestSet + 5),
         xpReward: 90,
-        completed: weekBestSet >= Math.max(30, weekBestSet + 5),
+        completed: weekBestSet >= Math.max(30, preWeekBestSet + 5),
         claimed: isClaimed("weekly-pb"),
         type: "weekly",
         icon: <Star className="w-4 h-4" />,
