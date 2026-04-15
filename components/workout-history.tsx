@@ -23,7 +23,7 @@ interface WorkoutHistoryProps {
 
 export function WorkoutHistory({ sessions, exerciseTypes = [] }: WorkoutHistoryProps) {
   const { t } = useLanguage()
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("all")
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("day")
 
   const getExerciseDisplay = (session: WorkoutSession) => {    const exerciseType = exerciseTypes.find((e) => e.id === session.exercise_type)
     const isTimeBased = exerciseType?.measurement_type === "minutes"
