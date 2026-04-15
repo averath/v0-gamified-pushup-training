@@ -77,8 +77,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/icon-192.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icon-192.svg" />
+        <title>Gamified training</title>
+        <link rel="icon" href="/icon-light-32x32.png" sizes="32x32" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
       <body className={`font-sans ${inter.variable} ${jetbrainsMono.variable}`}>
         <LanguageProvider>
