@@ -168,7 +168,6 @@ export function PushupTracker({
 
   const currentTotal = totals[activeExercise] || 0
   const levelData = useMemo(() => getLevelProgress(currentTotal), [currentTotal])
-  const pushupsForNextLevel = useMemo(() => getPushupsForNextLevel(levelData.currentLevel), [levelData.currentLevel])
 
   const sessions = useMemo(
     () =>
@@ -201,9 +200,7 @@ export function PushupTracker({
     const exercise = exerciseTypes.find((e) => e.id === type)
     return exercise?.display_name || "Reps"
   }
-
-  const currentExercise = exerciseTypes.find((e) => e.id === activeExercise)
-
+0
   const currentWorkoutCount = workoutCounts[activeExercise] || 0
 
   return (
