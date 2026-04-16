@@ -3,7 +3,7 @@
 import { useState } from "react"
 import type { WorkoutSession } from "@/lib/storage"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity } from "lucide-react"
+import { Activity, Trash2, X, Check } from "lucide-react"
 import { useLanguage } from "@/lib/i18n/language-context"
 
 type TimePeriod = "all" | "year" | "month" | "week" | "day"
@@ -19,11 +19,14 @@ const TIME_PERIODS: { value: TimePeriod; short: string; ms: number | null }[] = 
 interface WorkoutHistoryProps {
   sessions: WorkoutSession[]
   exerciseTypes?: Array<{ id: string; display_name: string; measurement_type: string }>
+  onDelete?: (workoutId: string) => Promise<void>
 }
 
-export function WorkoutHistory({ sessions, exerciseTypes = [] }: WorkoutHistoryProps) {
+export function WorkoutHistory({ sessions, exerciseTypes = [], onDelete }: WorkoutHistoryProps) {
   const { t } = useLanguage()
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("day")
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const getExerciseDisplay = (session: WorkoutSession) => {    const exerciseType = exerciseTypes.find((e) => e.id === session.exercise_type)
     const isTimeBased = exerciseType?.measurement_type === "minutes"
@@ -78,6 +81,17 @@ export function WorkoutHistory({ sessions, exerciseTypes = [] }: WorkoutHistoryP
 
   const recentSessions = filteredSessions.slice(0, 50)
 
+  const handleDeleteConfirm = async (id: string) => {
+    if (!onDelete) return
+    setIsDeleting(true)
+    try {
+      await onDelete(id)
+      setPendingDeleteId(null)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -108,10 +122,15 @@ export function WorkoutHistory({ sessions, exerciseTypes = [] }: WorkoutHistoryP
           <div className="space-y-2">
             {recentSessions.map((session) => {
               const display = getExerciseDisplay(session)
+              const isPendingDelete = pendingDeleteId === session.id
               return (
                 <div
                   key={session.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                  className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+                    isPendingDelete
+                      ? "bg-destructive/10 border border-destructive/30"
+                      : "bg-secondary/50 hover:bg-secondary"
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -126,8 +145,45 @@ export function WorkoutHistory({ sessions, exerciseTypes = [] }: WorkoutHistoryP
                           minute: "2-digit",
                         })}
                       </p>
+                      {isPendingDelete && (
+                        <p className="text-xs text-destructive font-medium mt-0.5">
+                          Also removes related quest rewards
+                        </p>
+                      )}
                     </div>
                   </div>
+                  {onDelete && (
+                    <div className="flex items-center gap-1 ml-2 shrink-0">
+                      {isPendingDelete ? (
+                        <>
+                          <button
+                            onClick={() => handleDeleteConfirm(session.id)}
+                            disabled={isDeleting}
+                            className="p-1.5 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                            title="Confirm delete"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setPendingDeleteId(null)}
+                            disabled={isDeleting}
+                            className="p-1.5 rounded-md bg-secondary text-muted-foreground hover:bg-secondary/80 disabled:opacity-50 transition-colors"
+                            title="Cancel"
+                          >
+                            <X className="w-3.5 h-3.5" />ľľ
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setPendingDeleteId(session.id)}
+                          className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          title="Delete workout"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}

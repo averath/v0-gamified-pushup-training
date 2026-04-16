@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { getLevelProgress, getPushupsForNextLevel, getTotalPushupsForLevel, getTierIcon } from "@/lib/level-system"
+import { getLevelProgress, getTotalPushupsForLevel, getTierIcon } from "@/lib/level-system"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -158,6 +158,89 @@ export function PushupTracker({
     } catch (error) {
       console.error("Error claiming quest XP:", error)
     }
+  }
+
+  const handleDeleteWorkout = async (workoutId: string) => {
+    const workout = allWorkouts.find((w) => w.id === workoutId)
+    if (!workout) return
+
+    const exerciseType = workout.exercise_type || "pushups"
+    const workoutDate = new Date(workout.created_at)
+
+    // Compute day and week boundaries
+    const startOfDay = new Date(workoutDate.getFullYear(), workoutDate.getMonth(), workoutDate.getDate())
+    const dayOfWeek = workoutDate.getDay()
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    const startOfWeek = new Date(
+      workoutDate.getFullYear(),
+      workoutDate.getMonth(),
+      workoutDate.getDate() - daysFromMonday,
+    )
+    const endOfWeek = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    // Delete the workout
+    const { error: workoutError } = await supabase.from("workouts").delete().eq("id", workoutId)
+    if (workoutError) throw workoutError
+
+    // Find and delete quest rewards for same exercise in same day + week
+    const { data: questRewards, error: fetchError } = await supabase
+      .from("workouts")
+      .select("id, value")
+      .eq("user_id", user.id)
+      .eq("is_quest_reward", true)
+      .eq("exercise_type", exerciseType)
+      .gte("created_at", startOfDay.toISOString())
+      .lt("created_at", endOfWeek.toISOString())
+
+    if (fetchError) throw fetchError
+
+    let deletedQuestXP = 0
+    if (questRewards && questRewards.length > 0) {
+      deletedQuestXP = questRewards.reduce((sum, r) => sum + r.value, 0)
+      const { error: deleteQuestError } = await supabase
+        .from("workouts")
+        .delete()
+        .in(
+          "id",
+          questRewards.map((r) => r.id),
+        )
+      if (deleteQuestError) throw deleteQuestError
+    }
+
+    // Clear localStorage claimed-quest entries for this exercise + period
+    const dailyPeriodKey = startOfDay.toISOString().split("T")[0]
+    const weeklyPeriodKey = startOfWeek.toISOString().split("T")[0]
+    const dailyStorageKey = `claimed-quests-daily-${dailyPeriodKey}`
+    const weeklyStorageKey = `claimed-quests-weekly-${weeklyPeriodKey}`
+
+    const dailyClaimed: string[] = JSON.parse(localStorage.getItem(dailyStorageKey) || "[]")
+    const weeklyClaimed: string[] = JSON.parse(localStorage.getItem(weeklyStorageKey) || "[]")
+    localStorage.setItem(
+      dailyStorageKey,
+      JSON.stringify(dailyClaimed.filter((q) => !q.endsWith(`-${exerciseType}`))),
+    )
+    localStorage.setItem(
+      weeklyStorageKey,
+      JSON.stringify(weeklyClaimed.filter((q) => !q.endsWith(`-${exerciseType}`))),
+    )
+
+    // Update state
+    const deletedIds = new Set([workoutId, ...(questRewards?.map((r) => r.id) || [])])
+    setAllWorkouts((prev) => prev.filter((w) => !deletedIds.has(w.id)))
+    setWorkouts((prev) => prev.filter((w) => !deletedIds.has(w.id)))
+    setTotals((prev) => ({
+      ...prev,
+      [exerciseType]: Math.max(0, (prev[exerciseType] || 0) - workout.value - deletedQuestXP),
+    }))
+    setWorkoutCounts((prev) => ({
+      ...prev,
+      [exerciseType]: Math.max(0, (prev[exerciseType] || 0) - 1),
+    }))
   }
 
   const handleLogout = async () => {
@@ -384,6 +467,7 @@ export function PushupTracker({
               display_name: e.display_name,
               measurement_type: (e as any).measurement_type ?? "reps",
             }))}
+            onDelete={handleDeleteWorkout}
           />
       </div>
 
