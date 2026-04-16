@@ -170,7 +170,7 @@ export function WorkoutHistory({ sessions, exerciseTypes = [], onDelete }: Worko
                             className="p-1.5 rounded-md bg-secondary text-muted-foreground hover:bg-secondary/80 disabled:opacity-50 transition-colors"
                             title="Cancel"
                           >
-                            <X className="w-3.5 h-3.5" />ľľ
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </>
                       ) : (
