@@ -10,15 +10,30 @@ interface ExerciseType {
 }
 
 export function useSelectedExercise(exerciseTypes: ExerciseType[]) {
-  const [selectedExercise, setSelectedExercise] = useState<string>("")
+  const [selectedExercise, setSelectedExercise] = useState<string>(() => {
+    // Initialize state with localStorage value or first exercise type on mount
+    if (typeof window !== "undefined") {
+      const savedExercise = localStorage.getItem("selectedExercise")
+      if (savedExercise && exerciseTypes.some((e) => e.id === savedExercise)) {
+        return savedExercise
+      }
+    }
+    return exerciseTypes[0]?.id || ""
+  })
 
+  // Update state when exerciseTypes changes (e.g., after loading from API)
   useEffect(() => {
-    const savedExercise = localStorage.getItem("selectedExercise")
-    const initialExercise =
-      savedExercise && exerciseTypes.some((e) => e.id === savedExercise) ? savedExercise : exerciseTypes[0]?.id || ""
-    setSelectedExercise(initialExercise)
-  }, [exerciseTypes])
+    if (!selectedExercise && exerciseTypes.length > 0) {
+      const savedExercise = localStorage.getItem("selectedExercise")
+      const initialExercise =
+        savedExercise && exerciseTypes.some((e) => e.id === savedExercise)
+          ? savedExercise
+          : exerciseTypes[0]?.id || ""
+      setSelectedExercise(initialExercise)
+    }
+  }, [exerciseTypes, selectedExercise])
 
+  // Save to localStorage whenever selection changes
   useEffect(() => {
     if (selectedExercise) {
       localStorage.setItem("selectedExercise", selectedExercise)
