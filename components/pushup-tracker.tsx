@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus, BarChart3, Volume2, VolumeX } from "lucide-react"
+import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus, BarChart3, Volume2, VolumeX, Bell } from "lucide-react"
 import { LevelBadge } from "@/components/level-badge"
 import { ProgressBar } from "@/components/progress-bar"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
@@ -28,6 +28,7 @@ import { ShareResultsDialog } from "@/components/share-results-dialog"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
 import { useSoundSettings } from "@/hooks/use-sound-settings"
 import { Footer } from "@/components/footer"
+import { MiniActivityFeed } from "@/components/mini-activity-feed"
 import { useLanguage } from "@/lib/i18n/language-context"
 
 interface ExerciseType {
@@ -304,6 +305,12 @@ export function PushupTracker({
               level={levelData.currentLevel}
               workoutCount={currentWorkoutCount}
             />
+            <Link href="/activity">
+              <Button variant="outline" size="sm" className="gap-2 bg-transparent px-2 sm:px-3">
+                <Bell className="w-4 h-4" />
+                <span className="hidden sm:inline">Activity</span>
+              </Button>
+            </Link>
             <Link href="/leaderboard">
               <Button variant="outline" size="sm" className="gap-2 bg-transparent px-2 sm:px-3">
                 <Trophy className="w-4 h-4" />
@@ -458,6 +465,21 @@ export function PushupTracker({
             description={`Next: ${getTotalPushupsForLevel(levelData.nextLevel).toLocaleString()} total`}
           />
           <StatsCard title="Workouts" value={currentWorkoutCount} icon={Zap} description="Sessions logged" />
+        </div>
+
+        <div className="mb-8">
+          <MiniActivityFeed
+            workouts={allWorkouts.map((w) => ({
+              id: w.id,
+              value: w.value,
+              created_at: w.created_at,
+              exercise_type: w.exercise_type,
+              is_quest_reward: w.is_quest_reward,
+            }))}
+            exerciseTypes={exerciseTypes}
+            totals={totals}
+            maxItems={4}
+          />
         </div>
 
         <WorkoutHistory
