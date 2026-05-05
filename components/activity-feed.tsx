@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { ActivityCard } from "@/components/activity-card"
 import type { Activity, ActivityType } from "@/lib/activity-types"
 import {
@@ -240,7 +239,7 @@ export function ActivityFeed({
       )}
 
       <CardContent className="p-0">
-        <ScrollArea style={{ maxHeight }} className="px-4 pb-4">
+        <div style={{ maxHeight }} className="px-4 pb-4 overflow-y-auto">
           {sortedActivities.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center mb-4">
@@ -294,7 +293,7 @@ export function ActivityFeed({
               ))}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   )
