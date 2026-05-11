@@ -21,6 +21,7 @@ export default function DashboardPage() {
     workoutCounts: Record<string, number>
     username: string
     exerciseTypes: ExerciseType[]
+    userId: string
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
@@ -87,6 +88,7 @@ export default function DashboardPage() {
           workoutCounts,
           username: profileResult.data?.username || user.email || "",
           exerciseTypes: exerciseTypes || [],
+          userId: user.id,
         })
       } catch (err) {
         console.error("Error loading dashboard data:", err)
@@ -131,6 +133,7 @@ export default function DashboardPage() {
       username={data.username}
       exerciseTypes={data.exerciseTypes}
       allWorkouts={data.allWorkouts}
+      userId={data.userId}
     />
   )
 }
