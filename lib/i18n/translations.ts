@@ -7,6 +7,7 @@ export const translations = {
       running: "Running",
       planks: "Planks",
       burpees: "Burpees",
+      dips: "Dips",
     },
     hero: {
       badge: "Level Up Your Fitness",
@@ -65,6 +66,7 @@ export const translations = {
       running: "Bieganie",
       planks: "Deski",
       burpees: "Burpees",
+      dips: "Dipy",
     },
     hero: {
       badge: "Rozwijaj Swoją Formę",
