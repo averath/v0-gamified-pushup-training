@@ -175,7 +175,7 @@ export function AddWorkoutDialog({
                 const value = Number.parseInt(e.target.value)
                 if (!isNaN(value) && value > 0) {
                   setCount(value)
-                }
+                } else setCount(0)
               }}
               className="w-32 text-center text-sm h-12 number-input-no-spin"
               placeholder="Enter value"
