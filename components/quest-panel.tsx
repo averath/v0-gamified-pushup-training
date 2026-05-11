@@ -19,10 +19,12 @@ import {
   Star,
   TrendingUp,
   Timer,
+  Loader2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
+import { createClient } from "@/lib/supabase/client"
 
 interface Workout {
   id: string
@@ -37,6 +39,7 @@ interface QuestPanelProps {
   exerciseType: string
   exerciseName: string
   currentLevel: number
+  userId: string
   onClaimXP?: (questId: string, xpAmount: number) => void
 }
 
@@ -69,10 +72,6 @@ function getPeriodKey(type: "daily" | "weekly"): string {
     const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysFromMonday)
     return startOfWeek.toISOString().split("T")[0]
   }
-}
-
-function getClaimedQuestsKey(type: "daily" | "weekly"): string {
-  return `claimed-quests-${type}-${getPeriodKey(type)}`
 }
 
 /**
@@ -130,42 +129,113 @@ const TIER_STYLES: Record<Quest["tier"], { border: string; bg: string; badge: st
   },
 }
 
-export function QuestPanel({ workouts, exerciseType, exerciseName, currentLevel, onClaimXP }: QuestPanelProps) {
+export function QuestPanel({ workouts, exerciseType, exerciseName, currentLevel, userId, onClaimXP }: QuestPanelProps) {
   const [claimedQuests, setClaimedQuests] = useState<Set<string>>(new Set())
   const [dailyLeveledUp, setDailyLeveledUp] = useState(false)
   const [weeklyLeveledUp, setWeeklyLeveledUp] = useState(false)
+  const [isLoadingClaims, setIsLoadingClaims] = useState(true)
+  const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null)
 
+  const supabase = useMemo(() => createClient(), [])
+
+  // Load claimed quests from database
   useEffect(() => {
-    const dailyKey = getClaimedQuestsKey("daily")
-    const weeklyKey = getClaimedQuestsKey("weekly")
-    const dailyClaimed = JSON.parse(localStorage.getItem(dailyKey) || "[]")
-    const weeklyClaimed = JSON.parse(localStorage.getItem(weeklyKey) || "[]")
-    setClaimedQuests(new Set([...dailyClaimed, ...weeklyClaimed]))
+    async function loadClaimedQuests() {
+      if (!userId) {
+        setIsLoadingClaims(false)
+        return
+      }
+
+      try {
+        const dailyPeriodKey = getPeriodKey("daily")
+        const weeklyPeriodKey = getPeriodKey("weekly")
+
+        const { data, error } = await supabase
+          .from("quest_claims")
+          .select("quest_id, exercise_type, period_type, period_key")
+          .eq("user_id", userId)
+          .or(`and(period_type.eq.daily,period_key.eq.${dailyPeriodKey}),and(period_type.eq.weekly,period_key.eq.${weeklyPeriodKey})`)
+
+        if (error) {
+          console.error("Error loading quest claims:", error)
+          return
+        }
+
+        const claimedSet = new Set<string>()
+        data?.forEach((claim) => {
+          claimedSet.add(`${claim.quest_id}-${claim.exercise_type}`)
+        })
+        setClaimedQuests(claimedSet)
+      } catch (error) {
+        console.error("Error loading quest claims:", error)
+      } finally {
+        setIsLoadingClaims(false)
+      }
+    }
+
+    loadClaimedQuests()
 
     // Track level at start of each period and detect level-ups
     getLevelAtPeriodStart("daily", currentLevel)
     getLevelAtPeriodStart("weekly", currentLevel)
     setDailyLeveledUp(hasPeriodLevelUp("daily", currentLevel))
     setWeeklyLeveledUp(hasPeriodLevelUp("weekly", currentLevel))
-  }, [currentLevel])
+  }, [userId, currentLevel, supabase])
 
   const handleClaimQuest = useCallback(
-    (quest: Quest) => {
-      if (quest.claimed || !quest.completed || !onClaimXP) return
+    async (quest: Quest) => {
+      if (quest.claimed || !quest.completed || !onClaimXP || !userId) return
 
-      const storageKey = getClaimedQuestsKey(quest.type)
-      const currentClaimed = JSON.parse(localStorage.getItem(storageKey) || "[]")
       const questKey = `${quest.id}-${exerciseType}`
-
-      if (!currentClaimed.includes(questKey)) {
-        currentClaimed.push(questKey)
-        localStorage.setItem(storageKey, JSON.stringify(currentClaimed))
-      }
-
+      
+      // Optimistically update UI
+      setClaimingQuestId(quest.id)
       setClaimedQuests((prev) => new Set([...prev, questKey]))
-      onClaimXP(quest.id, quest.xpReward)
+
+      try {
+        const periodKey = getPeriodKey(quest.type)
+
+        const { error } = await supabase.from("quest_claims").insert({
+          user_id: userId,
+          quest_id: quest.id,
+          exercise_type: exerciseType,
+          period_type: quest.type,
+          period_key: periodKey,
+          xp_amount: quest.xpReward,
+        })
+
+        if (error) {
+          // Check if it's a duplicate error (already claimed)
+          if (error.code === "23505") {
+            // Already claimed - just keep the optimistic update
+            console.log("Quest already claimed")
+          } else {
+            // Revert optimistic update on other errors
+            setClaimedQuests((prev) => {
+              const next = new Set(prev)
+              next.delete(questKey)
+              return next
+            })
+            console.error("Error claiming quest:", error)
+            return
+          }
+        }
+
+        // Grant the XP
+        onClaimXP(quest.id, quest.xpReward)
+      } catch (error) {
+        // Revert optimistic update on error
+        setClaimedQuests((prev) => {
+          const next = new Set(prev)
+          next.delete(questKey)
+          return next
+        })
+        console.error("Error claiming quest:", error)
+      } finally {
+        setClaimingQuestId(null)
+      }
     },
-    [exerciseType, onClaimXP],
+    [exerciseType, onClaimXP, userId, supabase],
   )
 
   // After claiming XP, re-check level-up status (parent updates currentLevel, which triggers the useEffect)
@@ -498,6 +568,26 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, currentLevel,
   const dailyChains = groupByChain(visibleDaily)
   const weeklyChains = groupByChain(visibleWeekly)
 
+  if (isLoadingClaims) {
+    return (
+      <Card className="bg-gradient-to-br from-card via-card to-primary/5 border-border overflow-hidden">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-primary/20">
+                <Scroll className="w-4 h-4 text-primary" />
+              </div>
+              Quests
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="bg-gradient-to-br from-card via-card to-primary/5 border-border overflow-hidden">
       <CardHeader className="pb-3">
@@ -529,7 +619,7 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, currentLevel,
           </h4>
           <div className="space-y-2">
             {dailyChains.map((chain) => (
-              <QuestChain key={chain[0].id} chain={chain} onClaim={(q) => handleClaimQuest(q as Quest)} />
+              <QuestChain key={chain[0].id} chain={chain} onClaim={(q) => handleClaimQuest(q as Quest)} claimingQuestId={claimingQuestId} />
             ))}
           </div>
         </div>
@@ -542,7 +632,7 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, currentLevel,
           </h4>
           <div className="space-y-2">
             {weeklyChains.map((chain) => (
-              <QuestChain key={chain[0].id} chain={chain} onClaim={(q) => handleClaimQuest(q as Quest)} />
+              <QuestChain key={chain[0].id} chain={chain} onClaim={(q) => handleClaimQuest(q as Quest)} claimingQuestId={claimingQuestId} />
             ))}
           </div>
         </div>
@@ -555,12 +645,14 @@ export function QuestPanel({ workouts, exerciseType, exerciseName, currentLevel,
 function QuestChain({
   chain,
   onClaim,
+  claimingQuestId,
 }: {
   chain: (Quest & { _locked: boolean; _needsLevelUp: boolean })[]
   onClaim: (q: Quest & { _locked: boolean; _needsLevelUp: boolean }) => void
+  claimingQuestId: string | null
 }) {
   if (chain.length === 1) {
-    return <QuestItem quest={chain[0]} onClaim={() => onClaim(chain[0])} />
+    return <QuestItem quest={chain[0]} onClaim={() => onClaim(chain[0])} isClaiming={claimingQuestId === chain[0].id} />
   }
 
   return (
@@ -575,7 +667,7 @@ function QuestChain({
               </span>
             </div>
           )}
-          <QuestItem quest={quest} onClaim={() => onClaim(quest)} />
+          <QuestItem quest={quest} onClaim={() => onClaim(quest)} isClaiming={claimingQuestId === quest.id} />
         </div>
       ))}
     </div>
@@ -585,9 +677,11 @@ function QuestChain({
 function QuestItem({
   quest,
   onClaim,
+  isClaiming,
 }: {
   quest: Quest & { _locked: boolean; _needsLevelUp: boolean }
   onClaim: () => void
+  isClaiming: boolean
 }) {
   const progressPercent = Math.min((quest.progress / quest.target) * 100, 100)
   const canClaim = quest.completed && !quest.claimed
@@ -681,9 +775,9 @@ function QuestItem({
               )}
             </div>
             {canClaim ? (
-              <Button size="sm" variant="default" className="h-6 px-2 text-xs gap-1 animate-pulse shrink-0" onClick={onClaim}>
-                <Gift className="w-3 h-3" />
-                Claim +{quest.xpReward} XP
+              <Button size="sm" variant="default" className={`h-6 px-2 text-xs gap-1 shrink-0 ${isClaiming ? '' : 'animate-pulse'}`} onClick={onClaim} disabled={isClaiming}>
+                {isClaiming ? <Loader2 className="w-3 h-3 animate-spin" /> : <Gift className="w-3 h-3" />}
+                {isClaiming ? 'Claiming...' : `Claim +${quest.xpReward} XP`}
               </Button>
             ) : (
               <div

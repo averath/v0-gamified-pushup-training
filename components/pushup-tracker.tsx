@@ -53,6 +53,7 @@ interface PushupTrackerProps {
   username: string
   exerciseTypes: ExerciseType[]
   allWorkouts: Workout[]
+  userId: string
 }
 
 export function PushupTracker({
@@ -62,6 +63,7 @@ export function PushupTracker({
   username,
   exerciseTypes,
   allWorkouts: initialAllWorkouts,
+  userId,
 }: PushupTrackerProps) {
   const [totals, setTotals] = useState(initialTotals)
   const [workoutCounts, setWorkoutCounts] = useState(initialWorkoutCounts)
@@ -440,6 +442,7 @@ export function PushupTracker({
             exerciseType={activeExercise}
             exerciseName={getExerciseName(activeExercise)}
             currentLevel={levelData.currentLevel}
+            userId={userId}
             onClaimXP={handleClaimQuestXP}
           />
         </div>
