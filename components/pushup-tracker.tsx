@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus, BarChart3, Volume2, VolumeX } from "lucide-react"
+import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus, BarChart3, Volume2, VolumeX, Flame } from "lucide-react"
 import { LevelBadge } from "@/components/level-badge"
 import { ProgressBar } from "@/components/progress-bar"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { getLevelProgress, getTotalPushupsForLevel, getTierIcon } from "@/lib/level-system"
+import { calculateCurrentStreak, calculateBestStreak } from "@/lib/streak"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -279,6 +280,9 @@ export function PushupTracker({
     [allWorkouts],
   )
 
+  const currentStreak = useMemo(() => calculateCurrentStreak(allWorkouts), [allWorkouts])
+  const bestStreak = useMemo(() => calculateBestStreak(allWorkouts), [allWorkouts])
+
   const getExerciseName = (type: string) => {
     const key = type as keyof typeof t.workoutTypes
     if (t.workoutTypes[key]) return t.workoutTypes[key]
@@ -447,7 +451,7 @@ export function PushupTracker({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatsCard
             title={`Total ${getExerciseName(activeExercise)}`}
             value={currentTotal.toLocaleString()}
@@ -461,6 +465,12 @@ export function PushupTracker({
             description={`Next: ${getTotalPushupsForLevel(levelData.nextLevel).toLocaleString()} total`}
           />
           <StatsCard title="Workouts" value={currentWorkoutCount} icon={Zap} description="Sessions logged" />
+          <StatsCard
+            title={t.streak.current}
+            value={`${currentStreak} ${currentStreak === 1 ? t.streak.day : t.streak.days}`}
+            icon={Flame}
+            description={`${t.streak.best}: ${bestStreak} ${bestStreak === 1 ? t.streak.day : t.streak.days}`}
+          />
         </div>
 
         <WorkoutHistory

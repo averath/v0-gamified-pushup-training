@@ -53,6 +53,12 @@ export const translations = {
         button: "Start Your Journey",
       },
     },
+    streak: {
+      current: "Current Streak",
+      best: "Best",
+      days: "days",
+      day: "day",
+    },
     nav: {
       login: "Log in",
       signup: "Sign up",
@@ -112,6 +118,12 @@ export const translations = {
         subtitle: "Dołącz do społeczności oddanych sportowców przekraczających swoje granice każdego dnia.",
         button: "Rozpocznij Swoją Podróż",
       },
+    },
+    streak: {
+      current: "Obecna Seria",
+      best: "Najlepsza",
+      days: "dni",
+      day: "dzień",
     },
     nav: {
       login: "Zaloguj się",
