@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Plus, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,7 +21,7 @@ interface ExerciseType {
   name: string
   display_name: string
   icon: string | null
-  measurement_type: "reps" | "minutes" | "seconds" // added seconds support
+  measurement_type: "reps" | "minutes" | "seconds"
 }
 
 interface AddWorkoutDialogProps {
@@ -32,6 +32,38 @@ interface AddWorkoutDialogProps {
   disabled?: boolean
   exerciseTypes?: ExerciseType[]
   defaultExerciseType?: string
+}
+
+const HOLD_INITIAL_DELAY = 400
+const HOLD_START_INTERVAL = 150
+const HOLD_MIN_INTERVAL = 50
+
+function useHoldRepeat(action: () => void, disabled?: boolean) {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const delayRef = useRef(HOLD_START_INTERVAL)
+
+  const stop = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = null
+    delayRef.current = HOLD_START_INTERVAL
+  }, [])
+
+  const start = useCallback(() => {
+    if (disabled) return
+    action()
+    const repeat = () => {
+      timerRef.current = setTimeout(() => {
+        action()
+        delayRef.current = Math.max(HOLD_MIN_INTERVAL, Math.floor(delayRef.current * 0.8))
+        repeat()
+      }, delayRef.current)
+    }
+    timerRef.current = setTimeout(repeat, HOLD_INITIAL_DELAY)
+  }, [action, disabled])
+
+  useEffect(() => () => stop(), [stop])
+
+  return { start, stop }
 }
 
 export function AddWorkoutDialog({
@@ -46,9 +78,11 @@ export function AddWorkoutDialog({
   const { t } = useLanguage()
   const [internalOpen, setInternalOpen] = useState(false)
   const [count, setCount] = useState(10)
+  const [displayValue, setDisplayValue] = useState("10")
   const [exerciseType, setExerciseType] = useState<string>("pushups")
   const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([])
   const [loading, setLoading] = useState(true)
+  const isTypingRef = useRef(false)
 
   const getTranslatedExerciseName = (exercise: ExerciseType) => {
     const key = exercise.id as keyof typeof t.workoutTypes
@@ -75,7 +109,6 @@ export function AddWorkoutDialog({
     } else {
       async function fetchExerciseTypes() {
         const { data } = await supabase.from("exercise_types").select("*").order("created_at", { ascending: true })
-
         if (data) {
           setExerciseTypes(data)
           if (data.length > 0) {
@@ -87,6 +120,13 @@ export function AddWorkoutDialog({
       fetchExerciseTypes()
     }
   }, [propExerciseTypes, defaultExerciseType])
+
+  // Sync displayValue when count changes externally (hold buttons, quick select, reset)
+  useEffect(() => {
+    if (!isTypingRef.current) {
+      setDisplayValue(String(count))
+    }
+  }, [count])
 
   const selectedExercise = exerciseTypes.find((e) => e.id === exerciseType)
   const isTimeBased =
@@ -100,31 +140,60 @@ export function AddWorkoutDialog({
 
   useEffect(() => {
     if (selectedExercise) {
-      setCount(isTimeBased ? 10 : 10)
+      isTypingRef.current = false
+      setCount(10)
+      setDisplayValue("10")
     }
-  }, [exerciseType, isTimeBased])
+  }, [exerciseType])
+
+  const commitCount = (raw: string): number => {
+    const parsed = Number.parseInt(raw)
+    if (!isNaN(parsed) && parsed > 0) return parsed
+    return Math.max(1, count)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    isTypingRef.current = true
+    const raw = e.target.value
+    setDisplayValue(raw)
+    const parsed = Number.parseInt(raw)
+    if (!isNaN(parsed) && parsed > 0) {
+      setCount(parsed)
+    }
+  }
+
+  const handleInputBlur = () => {
+    isTypingRef.current = false
+    const safe = commitCount(displayValue)
+    setCount(safe)
+    setDisplayValue(String(safe))
+  }
+
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select()
+  }
+
+  const decrement = useCallback(() => setCount((c) => Math.max(1, c - 1)), [])
+  const increment = useCallback(() => setCount((c) => c + 1), [])
+  const decrementHold = useHoldRepeat(decrement, disabled)
+  const incrementHold = useHoldRepeat(increment, disabled)
 
   const handleAdd = () => {
-    if (count > 0) {
-      if (onAdd) {
-        onAdd(count, exerciseType)
-      }
-      if (onWorkoutAdded) {
-        onWorkoutAdded()
-      }
+    const effective = commitCount(displayValue)
+    if (effective > 0) {
+      if (onAdd) onAdd(effective, exerciseType)
+      if (onWorkoutAdded) onWorkoutAdded()
       setOpen(false)
+      isTypingRef.current = false
       setCount(10)
+      setDisplayValue("10")
     }
   }
 
   const getUnitName = () => {
     const exercise = exerciseTypes.find((e) => e.id === exerciseType)
-    if (exercise?.measurement_type === "seconds") {
-      return count === 1 ? "Second" : "Seconds"
-    }
-    if (exercise?.measurement_type === "minutes") {
-      return count === 1 ? "Minute" : "Minutes"
-    }
+    if (exercise?.measurement_type === "seconds") return count === 1 ? "Second" : "Seconds"
+    if (exercise?.measurement_type === "minutes") return count === 1 ? "Minute" : "Minutes"
     return exercise ? getTranslatedExerciseName(exercise) : "Reps"
   }
 
@@ -159,24 +228,23 @@ export function AddWorkoutDialog({
           <Button
             variant="outline"
             size="icon"
-            className="h-12 w-12 bg-transparent"
-            onClick={() => setCount(Math.max(1, count - 1))}
+            className="h-12 w-12 bg-transparent select-none"
+            onPointerDown={decrementHold.start}
+            onPointerUp={decrementHold.stop}
+            onPointerLeave={decrementHold.stop}
             disabled={disabled}
           >
             <Minus className="h-5 w-5" />
           </Button>
           <div className="flex flex-col items-center gap-2">
-            {/* <div className="text-6xl font-bold text-primary min-w-[120px] text-center">{count}</div> */}
             <Input
               type="number"
               min="1"
-              value={count}
-              onChange={(e) => {
-                const value = Number.parseInt(e.target.value)
-                if (!isNaN(value) && value > 0) {
-                  setCount(value)
-                } else setCount(0)
-              }}
+              value={displayValue}
+              onChange={handleInputChange}
+              onBlur={handleInputBlur}
+              onFocus={handleInputFocus}
+              onClick={handleInputFocus}
               className="w-32 text-center text-sm h-12 number-input-no-spin"
               placeholder="Enter value"
               disabled={disabled}
@@ -185,8 +253,10 @@ export function AddWorkoutDialog({
           <Button
             variant="outline"
             size="icon"
-            className="h-12 w-12 bg-transparent"
-            onClick={() => setCount(count + 1)}
+            className="h-12 w-12 bg-transparent select-none"
+            onPointerDown={incrementHold.start}
+            onPointerUp={incrementHold.stop}
+            onPointerLeave={incrementHold.stop}
             disabled={disabled}
           >
             <Plus className="h-5 w-5" />
@@ -199,7 +269,10 @@ export function AddWorkoutDialog({
             <Button
               key={num}
               variant="secondary"
-              onClick={() => setCount(num)}
+              onClick={() => {
+                isTypingRef.current = false
+                setCount(num)
+              }}
               className={count === num ? "bg-accent text-accent-foreground" : ""}
               disabled={disabled}
             >
