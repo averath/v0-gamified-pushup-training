@@ -36,7 +36,7 @@ function LandingPageContent() {
   }, [])
 
   if (loading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>
+    return <div className="min-h-screen bg-background flex items-center justify-center">{t.common.loading}</div>
   }
 
   return (
@@ -48,13 +48,15 @@ function LandingPageContent() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <Zap className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-xl tracking-tight">LEVEL FITNESS</span>
+            <span className="font-bold text-xl tracking-tight">{t.app.name}</span>
           </div>
           <nav className="flex items-center gap-2">
             <InstallPWAButton />
             <LanguageSwitcher />
             <Link href="/features">
-              <Button variant="ghost" className="hidden sm:inline-flex">Features</Button>
+              <Button variant="ghost" className="hidden sm:inline-flex">
+                {t.nav.features}
+              </Button>
             </Link>
             {user ? (
               <Link href="/dashboard">
@@ -121,15 +123,15 @@ function LandingPageContent() {
         <div className="container mx-auto max-w-6xl">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="space-y-2">
-              <div className="text-5xl font-black text-primary">10+</div>
+              <div className="text-5xl font-black text-primary">{t.hero.stats.levelsValue}</div>
               <div className="text-muted-foreground font-medium">{t.hero.stats.levels}</div>
             </div>
             <div className="space-y-2">
-              <div className="text-5xl font-black text-accent">1000+</div>
+              <div className="text-5xl font-black text-accent">{t.hero.stats.repsValue}</div>
               <div className="text-muted-foreground font-medium">{t.hero.stats.reps}</div>
             </div>
             <div className="space-y-2">
-              <div className="text-5xl font-black text-primary">∞</div>
+              <div className="text-5xl font-black text-primary">{t.hero.stats.potentialValue}</div>
               <div className="text-muted-foreground font-medium">{t.hero.stats.potential}</div>
             </div>
           </div>

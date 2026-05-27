@@ -10,8 +10,10 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { useLanguage } from "@/lib/i18n/language-context"
 
 export default function SignUpPage() {
+  const { t } = useLanguage()
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -27,13 +29,13 @@ export default function SignUpPage() {
     setError(null)
 
     if (password !== repeatPassword) {
-      setError("Passwords do not match")
+      setError(t.auth.signup.passwordsMismatch)
       setIsLoading(false)
       return
     }
 
     if (username.length < 3) {
-      setError("Username must be at least 3 characters")
+      setError(t.auth.signup.usernameTooShort)
       setIsLoading(false)
       return
     }
@@ -55,7 +57,7 @@ export default function SignUpPage() {
       router.push("/dashboard")
       router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      setError(error instanceof Error ? error.message : t.common.genericError)
     } finally {
       setIsLoading(false)
     }
@@ -67,18 +69,18 @@ export default function SignUpPage() {
         <div className="flex flex-col gap-6">
           <Card className="border-border/50 bg-card/50 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-2xl">Sign up</CardTitle>
-              <CardDescription>Create a new account</CardDescription>
+              <CardTitle className="text-2xl">{t.auth.signup.title}</CardTitle>
+              <CardDescription>{t.auth.signup.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSignUp}>
                 <div className="flex flex-col gap-6">
                   <div className="grid gap-2">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="username">{t.auth.signup.username}</Label>
                     <Input
                       id="username"
                       type="text"
-                      placeholder="pushupmaster"
+                      placeholder={t.auth.signup.usernamePlaceholder}
                       required
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
@@ -86,18 +88,18 @@ export default function SignUpPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t.common.email}</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="m@example.com"
+                      placeholder={t.common.emailPlaceholder}
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t.common.password}</Label>
                     <Input
                       id="password"
                       type="password"
@@ -107,7 +109,7 @@ export default function SignUpPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="repeat-password">Repeat Password</Label>
+                    <Label htmlFor="repeat-password">{t.auth.signup.repeatPassword}</Label>
                     <Input
                       id="repeat-password"
                       type="password"
@@ -118,13 +120,13 @@ export default function SignUpPage() {
                   </div>
                   {error && <p className="text-sm text-destructive">{error}</p>}
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Sign up"}
+                    {isLoading ? t.auth.signup.loading : t.common.signup}
                   </Button>
                 </div>
                 <div className="mt-4 text-center text-sm">
-                  Already have an account?{" "}
+                  {t.auth.signup.hasAccount}{" "}
                   <Link href="/auth/login" className="underline underline-offset-4">
-                    Login
+                    {t.common.login}
                   </Link>
                 </div>
               </form>

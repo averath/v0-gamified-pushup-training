@@ -30,6 +30,7 @@ import {
 import { useEffect, useState, useCallback } from "react"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
 import { Footer } from "@/components/footer"
+import { useLanguage } from "@/lib/i18n/language-context"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,7 +39,7 @@ interface ExerciseType {
   name: string
   display_name: string
   icon: string | null
-  measurement_type: string | null
+  measurement_type: "reps" | "minutes" | "seconds"
   xp_multiplier: number
 }
 
@@ -63,37 +64,33 @@ const COMBINED_TAB = "__combined__"
 
 type TimePeriod = "all" | "year" | "month" | "week" | "day"
 
-const TIME_PERIODS: { value: TimePeriod; label: string; short: string }[] = [
-  { value: "all",   label: "All Time",   short: "All" },
-  { value: "year",  label: "Last Year",  short: "Year" },
-  { value: "month", label: "Last Month", short: "Month" },
-  { value: "week",  label: "Last Week",  short: "Week" },
-  { value: "day",   label: "Last Day",   short: "Day" },
-]
-
 function combinedViewName(period: TimePeriod): string {
   if (period === "all") return "combined_leaderboard"
   return `combined_leaderboard_${period}`
 }
 
 
-function unitLabel(measurementType: string | null): string {
-  if (measurementType === "seconds") return "sec"
-  if (measurementType === "minutes") return "min"
-  return "reps"
+function unitLabel(measurementType: string | null, units: { seconds: string; minutes: string; reps: string }): string {
+  if (measurementType === "seconds") return units.seconds
+  if (measurementType === "minutes") return units.minutes
+  return units.reps
 }
 
 // For the XP legend, show the multiplier scaled to a human-friendly rate.
 // Running is stored in minutes but we display "2× / hr" (multiplier × 60).
-function legendMultiplierLabel(xpMultiplier: number, measurementType: string | null): string {
+function legendMultiplierLabel(
+  xpMultiplier: number,
+  measurementType: string | null,
+  units: { seconds: string; reps: string; perHour: string },
+): string {
   if (measurementType === "minutes") {
     const perHour = Math.round(xpMultiplier * 60 * 100) / 100
-    return `${perHour}× / hr`
+    return `${perHour}× / ${units.perHour}`
   }
   if (measurementType === "seconds") {
-    return `${xpMultiplier}× / sec`
+    return `${xpMultiplier}× / ${units.seconds}`
   }
-  return `${xpMultiplier}× / rep`
+  return `${xpMultiplier}× / ${units.reps}`
 }
 
 function getLevelIcon(level: number) {
@@ -168,6 +165,7 @@ function CombinedRow({
   index: number
   currentUserId: string | null
 }) {
+  const { t } = useLanguage()
   const rank = index + 1
   const level = calculateLevel(entry.total_xp)
   const progress = calculateProgress(entry.total_xp)
@@ -187,14 +185,14 @@ function CombinedRow({
               <p className="text-lg font-bold truncate">@{entry.username}</p>
               {isCurrentUser && (
                 <span className="text-xs px-2 py-0.5 bg-primary text-primary-foreground rounded-full font-semibold animate-pulse">
-                  YOU
+                  {t.leaderboard.you}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 bg-background/50 rounded-full px-2 py-0.5 border border-border">
                 {getLevelIcon(level)}
-                <span className="text-xs font-semibold">LVL {level}</span>
+                <span className="text-xs font-semibold">{t.leaderboard.level} {level}</span>
               </div>
               <div className="flex-1 max-w-24 h-2 bg-background/80 rounded-full overflow-hidden border border-border">
                 <div
@@ -202,7 +200,7 @@ function CombinedRow({
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <span className="text-xs text-muted-foreground">{entry.workout_count} sessions</span>
+              <span className="text-xs text-muted-foreground">{entry.workout_count} {t.leaderboard.sessions}</span>
             </div>
           </div>
 
@@ -215,7 +213,7 @@ function CombinedRow({
                 <div className="absolute inset-0 blur-lg bg-gradient-to-r from-primary/30 to-accent/30 -z-10" />
               )}
             </div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">XP</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.leaderboard.units.xp}</p>
           </div>
         </div>
       </div>
@@ -246,6 +244,7 @@ function SubRow({
   currentUserId: string | null
   unit: string
 }) {
+  const { t } = useLanguage()
   const rank = index + 1
   const isCurrentUser = !!currentUserId && entry.id === currentUserId
 
@@ -263,11 +262,11 @@ function SubRow({
               <p className="text-lg font-bold truncate">@{entry.username}</p>
               {isCurrentUser && (
                 <span className="text-xs px-2 py-0.5 bg-primary text-primary-foreground rounded-full font-semibold animate-pulse">
-                  YOU
+                  {t.leaderboard.you}
                 </span>
               )}
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">{entry.workout_count} sessions</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{entry.workout_count} {t.leaderboard.sessions}</p>
           </div>
 
           <div className="text-right shrink-0">
@@ -299,21 +298,25 @@ function SubRow({
 }
 
 function EmptyState() {
+  const { t } = useLanguage()
+
   return (
     <div className="relative p-12 rounded-xl border-2 border-dashed border-border bg-card/50 text-center">
       <Trophy className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-      <p className="text-xl font-bold text-muted-foreground mb-2">No Champions Yet</p>
-      <p className="text-sm text-muted-foreground">Be the first to claim the throne!</p>
+      <p className="text-xl font-bold text-muted-foreground mb-2">{t.leaderboard.emptyTitle}</p>
+      <p className="text-sm text-muted-foreground">{t.leaderboard.emptySubtitle}</p>
     </div>
   )
 }
 
 function LoadingState() {
+  const { t } = useLanguage()
+
   return (
     <div className="relative p-12 rounded-xl border-2 border-border bg-card text-center overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-pulse" />
       <Loader2 className="h-12 w-12 text-primary mx-auto mb-3 animate-spin" />
-      <p className="text-muted-foreground font-medium">Loading warriors...</p>
+      <p className="text-muted-foreground font-medium">{t.leaderboard.loading}</p>
     </div>
   )
 }
@@ -321,6 +324,7 @@ function LoadingState() {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function LeaderboardPage() {
+  const { t } = useLanguage()
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([])
   const [exerciseTypesLoading, setExerciseTypesLoading] = useState(true)
@@ -351,7 +355,17 @@ export default function LeaderboardPage() {
         .from("exercise_types")
         .select("id, name, display_name, icon, measurement_type, xp_multiplier")
         .order("created_at", { ascending: true })
-      if (data && data.length > 0) setExerciseTypes(data)
+      if (data && data.length > 0) {
+        setExerciseTypes(
+          data.map((exercise) => ({
+            ...exercise,
+            measurement_type:
+              exercise.measurement_type === "minutes" || exercise.measurement_type === "seconds"
+                ? exercise.measurement_type
+                : "reps",
+          })),
+        )
+      }
       setExerciseTypesLoading(false)
     }
     fetchExerciseTypes()
@@ -430,7 +444,7 @@ export default function LeaderboardPage() {
       await handleWorkoutAdded()
     } catch (error) {
       console.error("Error adding workout:", error)
-      alert("Failed to add workout. Please try again.")
+      alert(t.leaderboard.addError)
     }
   }
 
@@ -452,7 +466,7 @@ export default function LeaderboardPage() {
 
   const renderSubBoard = (exerciseId: string) => {
     const ex = exerciseTypes.find((e) => e.id === exerciseId)
-    const unit = unitLabel(ex?.measurement_type ?? null)
+    const unit = unitLabel(ex?.measurement_type ?? null, t.leaderboard.units)
     const key = `${exerciseId}:${timePeriod}`
     const data = subData[key]
     const loading = subLoading[key]
@@ -481,7 +495,7 @@ export default function LeaderboardPage() {
         >
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold text-foreground">XP Multipliers</span>
+            <span className="text-sm font-semibold text-foreground">{t.leaderboard.xpMultipliers}</span>
           </div>
           {open ? (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -500,7 +514,7 @@ export default function LeaderboardPage() {
                   {ex.icon && <span className="text-base">{ex.icon}</span>}
                   <span className="text-sm font-medium">{ex.display_name}</span>
                   <span className="text-xs text-primary font-bold">
-                    {legendMultiplierLabel(ex.xp_multiplier, ex.measurement_type)}
+                    {legendMultiplierLabel(ex.xp_multiplier, ex.measurement_type, t.leaderboard.units)}
                   </span>
                 </div>
               ))}
@@ -513,9 +527,17 @@ export default function LeaderboardPage() {
 
   // ── Time period pill bar ───────────────────────────────────────────────────
 
+  const timePeriods: { value: TimePeriod; short: string }[] = [
+    { value: "all", short: t.leaderboard.timePeriods.all },
+    { value: "year", short: t.leaderboard.timePeriods.year },
+    { value: "month", short: t.leaderboard.timePeriods.month },
+    { value: "week", short: t.leaderboard.timePeriods.week },
+    { value: "day", short: t.leaderboard.timePeriods.day },
+  ]
+
   const TimePeriodBar = () => (
     <div className="flex items-center gap-1.5 mb-6 flex-wrap">
-      {TIME_PERIODS.map(({ value, short }) => (
+      {timePeriods.map(({ value, short }) => (
         <button
           key={value}
           onClick={() => setTimePeriod(value)}
@@ -535,7 +557,7 @@ export default function LeaderboardPage() {
 
   const TabBar = () => {
     const activeExercise = exerciseTypes.find((e) => e.id === activeTab)
-    const activeLabel = activeTab === COMBINED_TAB ? "Combined" : activeExercise?.display_name ?? "Select"
+    const activeLabel = activeTab === COMBINED_TAB ? t.leaderboard.combined : activeExercise?.display_name ?? t.leaderboard.select
     const activeIcon =
       activeTab === COMBINED_TAB ? (
         <Trophy className="h-4 w-4" />
@@ -561,7 +583,7 @@ export default function LeaderboardPage() {
               className={`flex items-center gap-2 cursor-pointer ${activeTab === COMBINED_TAB ? "bg-accent text-accent-foreground" : ""}`}
             >
               <Trophy className="h-4 w-4" />
-              <span>Combined</span>
+              <span>{t.leaderboard.combined}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {exerciseTypes.map((ex, i) => (
@@ -602,7 +624,7 @@ export default function LeaderboardPage() {
           <Link href={currentUserId ? "/dashboard" : "/"}>
             <Button variant="ghost" className="mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to {currentUserId ? "Dashboard" : "Home"}
+              {t.leaderboard.backTo} {currentUserId ? t.leaderboard.dashboard : t.leaderboard.home}
             </Button>
           </Link>
 
@@ -617,8 +639,8 @@ export default function LeaderboardPage() {
                 <Trophy className="h-9 w-9 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-black tracking-tight">HALL OF FAME</h1>
-                <p className="text-muted-foreground font-medium">Top Training Champions</p>
+                <h1 className="text-2xl font-black tracking-tight">{t.leaderboard.title}</h1>
+                <p className="text-muted-foreground font-medium">{t.leaderboard.subtitle}</p>
               </div>
             </div>
           </div>
@@ -635,7 +657,7 @@ export default function LeaderboardPage() {
             {activeTab !== COMBINED_TAB && (
               <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="px-3 py-1 bg-card border border-border rounded-full font-medium">
-                  Raw {unitLabel(exerciseTypes.find((e) => e.id === activeTab)?.measurement_type ?? null)} — no XP weighting
+                  {t.leaderboard.rawPrefix} {unitLabel(exerciseTypes.find((e) => e.id === activeTab)?.measurement_type ?? null, t.leaderboard.units)} — {t.leaderboard.rawSuffix}
                 </span>
               </div>
             )}

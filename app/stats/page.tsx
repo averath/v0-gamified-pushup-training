@@ -9,6 +9,7 @@ import { getLevelProgress, getLevelTier, getTierIcon, MILESTONES, calculateLevel
 import { ExerciseSelector } from "@/components/exercise-selector"
 import { useSelectedExercise } from "@/hooks/use-selected-exercise"
 import { Footer } from "@/components/footer"
+import { useLanguage } from "@/lib/i18n/language-context"
 
 interface Workout {
   id: string
@@ -38,6 +39,7 @@ interface WeeklyStats {
 }
 
 export default function StatsPage() {
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([])
@@ -224,7 +226,7 @@ export default function StatsPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading your stats...</p>
+          <p className="text-muted-foreground">{t.statsPage.loading}</p>
         </div>
       </div>
     )
@@ -246,7 +248,7 @@ export default function StatsPage() {
             </Link>
             <div className="flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-primary" />
-              <h1 className="text-xl font-bold text-foreground">Player Stats</h1>
+              <h1 className="text-xl font-bold text-foreground">{t.statsPage.title}</h1>
             </div>
           </div>
           <span className="text-sm text-muted-foreground">@{username}</span>
@@ -265,7 +267,7 @@ export default function StatsPage() {
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm text-muted-foreground uppercase tracking-wider">Current Rank</p>
+                <p className="text-sm text-muted-foreground uppercase tracking-wider">{t.statsPage.currentRank}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-3xl">{getTierIcon(tier.name)}</span>
                   <span className={`text-2xl font-bold bg-gradient-to-r ${tier.color} bg-clip-text text-transparent`}>
@@ -274,7 +276,7 @@ export default function StatsPage() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-muted-foreground">Level</p>
+                <p className="text-sm text-muted-foreground">{t.statsPage.level}</p>
                 <p className="text-4xl font-bold text-foreground">{stats.levelProgress.currentLevel}</p>
               </div>
             </div>
@@ -286,7 +288,7 @@ export default function StatsPage() {
             </div>
             <div className="flex justify-between mt-2 text-sm">
               <span className="text-muted-foreground">
-                {stats.levelProgress.progressInLevel} / {stats.levelProgress.xpForNextLevel} XP
+                {stats.levelProgress.progressInLevel} / {stats.levelProgress.xpForNextLevel} {t.common.xp}
               </span>
               <span className="text-accent">{Math.round(stats.levelProgress.progressPercentage)}%</span>
             </div>
@@ -298,7 +300,7 @@ export default function StatsPage() {
           <div className="p-4 rounded-xl bg-card border border-border">
             <div className="flex items-center gap-2 mb-2">
               <Zap className="w-4 h-4 text-accent" />
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">Total XP</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">{t.statsPage.totalXp}</span>
             </div>
             <p className="text-2xl font-bold text-foreground">
               {stats.totalXP.toLocaleString()}
@@ -309,7 +311,7 @@ export default function StatsPage() {
           <div className="p-4 rounded-xl bg-card border border-border">
             <div className="flex items-center gap-2 mb-2">
               <Target className="w-4 h-4 text-primary" />
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">Workouts</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">{t.statsPage.workouts}</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{stats.totalWorkouts}</p>
           </div>
@@ -317,18 +319,18 @@ export default function StatsPage() {
           <div className="p-4 rounded-xl bg-card border border-border">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="w-4 h-4 text-green-500" />
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">Average</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">{t.statsPage.average}</span>
             </div>
             <p className="text-2xl font-bold text-foreground">
               {stats.averagePerWorkout}
-              <span className="text-sm text-muted-foreground ml-1">{getUnit()}/workout</span>
+              <span className="text-sm text-muted-foreground ml-1">{getUnit()}/{t.statsPage.perWorkout}</span>
             </p>
           </div>
 
           <div className="p-4 rounded-xl bg-card border border-border">
             <div className="flex items-center gap-2 mb-2">
               <Award className="w-4 h-4 text-yellow-500" />
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">Best</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">{t.statsPage.best}</span>
             </div>
             <p className="text-2xl font-bold text-foreground">
               {stats.bestWorkout}
@@ -345,13 +347,13 @@ export default function StatsPage() {
                 <Flame className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Current Streak</p>
-                <p className="text-3xl font-bold text-foreground">{stats.currentStreak} days</p>
+                <p className="text-sm text-muted-foreground">{t.statsPage.currentStreak}</p>
+                <p className="text-3xl font-bold text-foreground">{stats.currentStreak} {t.statsPage.days}</p>
               </div>
             </div>
-            {stats.currentStreak > 0 && <p className="text-sm text-orange-400">Keep it up! Don't break the chain!</p>}
+            {stats.currentStreak > 0 && <p className="text-sm text-orange-400">{t.statsPage.keepItUp}</p>}
             {stats.currentStreak === 0 && (
-              <p className="text-sm text-muted-foreground">Log a workout to start a streak!</p>
+              <p className="text-sm text-muted-foreground">{t.statsPage.startStreak}</p>
             )}
           </div>
 
@@ -361,11 +363,11 @@ export default function StatsPage() {
                 <Award className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Longest Streak</p>
-                <p className="text-3xl font-bold text-foreground">{stats.longestStreak} days</p>
+                <p className="text-sm text-muted-foreground">{t.statsPage.longestStreak}</p>
+                <p className="text-3xl font-bold text-foreground">{stats.longestStreak} {t.statsPage.days}</p>
               </div>
             </div>
-            <p className="text-sm text-purple-400">Your personal best!</p>
+            <p className="text-sm text-purple-400">{t.statsPage.personalBest}</p>
           </div>
         </div>
 
@@ -373,7 +375,7 @@ export default function StatsPage() {
         <div className="mb-8 p-6 rounded-xl bg-card border border-border">
           <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
-            Weekly Progress
+            {t.statsPage.weeklyProgress}
           </h3>
           {stats.weeklyStats.length > 0 ? (
             <div className="space-y-3">
@@ -395,13 +397,13 @@ export default function StatsPage() {
                         {getUnit()}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground w-20 text-right">{week.count} sessions</span>
+                    <span className="text-xs text-muted-foreground w-20 text-right">{week.count} {t.leaderboard.sessions}</span>
                   </div>
                 )
               })}
             </div>
           ) : (
-            <p className="text-muted-foreground text-center py-8">No workout data yet</p>
+            <p className="text-muted-foreground text-center py-8">{t.statsPage.noWorkoutData}</p>
           )}
         </div>
 
@@ -409,7 +411,7 @@ export default function StatsPage() {
         <div className="mb-8 p-6 rounded-xl bg-card border border-border">
           <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
             <Award className="w-5 h-5 text-yellow-500" />
-            Milestones
+            {t.statsPage.milestones}
           </h3>
           <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
             {MILESTONES.slice(0, 12).map((milestone) => {
@@ -425,7 +427,7 @@ export default function StatsPage() {
                 >
                   <span className="text-lg">{reached ? "🏆" : "🔒"}</span>
                   <p className={`text-sm font-bold mt-1 ${reached ? "text-yellow-500" : "text-muted-foreground"}`}>
-                    Lv.{milestone}
+                    {t.common.levelPrefix}{milestone}
                   </p>
                 </div>
               )
@@ -437,29 +439,29 @@ export default function StatsPage() {
         <div className="p-6 rounded-xl bg-card border border-border">
           <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />
-            Activity Summary
+            {t.statsPage.activitySummary}
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Days Active</p>
+              <p className="text-sm text-muted-foreground">{t.statsPage.daysActive}</p>
               <p className="text-xl font-bold text-foreground">{stats.daysActive}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">First Workout</p>
+              <p className="text-sm text-muted-foreground">{t.statsPage.firstWorkout}</p>
               <p className="text-xl font-bold text-foreground">
                 {stats.firstWorkout?.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) ||
                   "—"}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Last Workout</p>
+              <p className="text-sm text-muted-foreground">{t.statsPage.lastWorkout}</p>
               <p className="text-xl font-bold text-foreground">
                 {stats.lastWorkout?.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) ||
                   "—"}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Workout Rate</p>
+              <p className="text-sm text-muted-foreground">{t.statsPage.workoutRate}</p>
               <p className="text-xl font-bold text-foreground">
                 {stats.daysActive > 0 && stats.firstWorkout
                   ? `${((stats.daysActive / Math.max(1, Math.ceil((Date.now() - stats.firstWorkout.getTime()) / 86400000))) * 100).toFixed(0)}%`

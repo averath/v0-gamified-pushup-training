@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { useLanguage } from "@/lib/i18n/language-context"
 
 export default function ResetPasswordPage() {
+  const { t } = useLanguage()
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -24,13 +26,13 @@ export default function ResetPasswordPage() {
     setError(null)
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
+      setError(t.auth.signup.passwordsMismatch)
       setIsLoading(false)
       return
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters")
+      setError(t.auth.resetPassword.passwordTooShort)
       setIsLoading(false)
       return
     }
@@ -47,7 +49,7 @@ export default function ResetPasswordPage() {
         router.push("/auth/login")
       }, 2000)
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      setError(error instanceof Error ? error.message : t.common.genericError)
     } finally {
       setIsLoading(false)
     }
@@ -59,19 +61,19 @@ export default function ResetPasswordPage() {
         <div className="flex flex-col gap-6">
           <Card className="border-border/50 bg-card/50 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-2xl">Set New Password</CardTitle>
-              <CardDescription>Enter your new password below</CardDescription>
+              <CardTitle className="text-2xl">{t.auth.resetPassword.title}</CardTitle>
+              <CardDescription>{t.auth.resetPassword.description}</CardDescription>
             </CardHeader>
             <CardContent>
               {success ? (
                 <div className="space-y-4">
-                  <p className="text-sm text-green-600">Password reset successful! Redirecting to login...</p>
+                  <p className="text-sm text-green-600">{t.auth.resetPassword.success}</p>
                 </div>
               ) : (
                 <form onSubmit={handlePasswordReset}>
                   <div className="flex flex-col gap-6">
                     <div className="grid gap-2">
-                      <Label htmlFor="password">New Password</Label>
+                      <Label htmlFor="password">{t.auth.resetPassword.newPassword}</Label>
                       <Input
                         id="password"
                         type="password"
@@ -82,7 +84,7 @@ export default function ResetPasswordPage() {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="confirm-password">Confirm Password</Label>
+                      <Label htmlFor="confirm-password">{t.auth.resetPassword.confirmPassword}</Label>
                       <Input
                         id="confirm-password"
                         type="password"
@@ -94,12 +96,12 @@ export default function ResetPasswordPage() {
                     </div>
                     {error && <p className="text-sm text-destructive">{error}</p>}
                     <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Resetting..." : "Reset Password"}
+                      {isLoading ? t.auth.resetPassword.resetting : t.auth.resetPassword.submit}
                     </Button>
                   </div>
                   <div className="mt-4 text-center text-sm">
                     <Link href="/auth/login" className="underline underline-offset-4">
-                      Back to Login
+                      {t.common.backToLogin}
                     </Link>
                   </div>
                 </form>

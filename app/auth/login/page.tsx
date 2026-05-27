@@ -10,8 +10,10 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { useLanguage } from "@/lib/i18n/language-context"
 
 export default function LoginPage() {
+  const { t } = useLanguage()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +35,7 @@ export default function LoginPage() {
       router.push("/dashboard")
       router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      setError(error instanceof Error ? error.message : t.common.genericError)
     } finally {
       setIsLoading(false)
     }
@@ -45,18 +47,18 @@ export default function LoginPage() {
         <div className="flex flex-col gap-6">
           <Card className="border-border/50 bg-card/50 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-2xl">Login</CardTitle>
-              <CardDescription>Enter your email below to login to your account</CardDescription>
+              <CardTitle className="text-2xl">{t.auth.login.title}</CardTitle>
+              <CardDescription>{t.auth.login.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleLogin}>
                 <div className="flex flex-col gap-6">
                   <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t.common.email}</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="m@example.com"
+                      placeholder={t.common.emailPlaceholder}
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -64,12 +66,12 @@ export default function LoginPage() {
                   </div>
                   <div className="grid gap-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password">{t.common.password}</Label>
                       <Link
                         href="/auth/forgot-password"
                         className="text-sm underline underline-offset-4 text-muted-foreground hover:text-foreground"
                       >
-                        Forgot password?
+                        {t.auth.login.forgotPassword}
                       </Link>
                     </div>
                     <Input
@@ -82,13 +84,13 @@ export default function LoginPage() {
                   </div>
                   {error && <p className="text-sm text-destructive">{error}</p>}
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Logging in..." : "Login"}
+                    {isLoading ? t.auth.login.loading : t.common.login}
                   </Button>
                 </div>
                 <div className="mt-4 text-center text-sm">
-                  Don&apos;t have an account?{" "}
+                  {t.auth.login.noAccount}{" "}
                   <Link href="/auth/sign-up" className="underline underline-offset-4">
-                    Sign up
+                    {t.common.signup}
                   </Link>
                 </div>
               </form>

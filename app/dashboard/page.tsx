@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { PushupTracker } from "@/components/pushup-tracker"
 import { Loader2 } from "lucide-react"
+import { useLanguage } from "@/lib/i18n/language-context"
 
 interface ExerciseType {
   id: string
@@ -13,6 +14,7 @@ interface ExerciseType {
 }
 
 export default function DashboardPage() {
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true)
   const [data, setData] = useState<{
     workouts: any[]
@@ -92,7 +94,7 @@ export default function DashboardPage() {
         })
       } catch (err) {
         console.error("Error loading dashboard data:", err)
-        setError("Failed to load dashboard data")
+        setError(t.dashboard.loadError)
       } finally {
         setIsLoading(false)
       }
@@ -106,7 +108,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading your progress...</p>
+          <p className="text-muted-foreground">{t.dashboard.loading}</p>
         </div>
       </div>
     )
@@ -116,9 +118,9 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-destructive mb-4">{error || "Failed to load data"}</p>
+          <p className="text-destructive mb-4">{error || t.dashboard.fallbackError}</p>
           <button onClick={() => window.location.reload()} className="text-primary hover:underline">
-            Try again
+            {t.dashboard.retry}
           </button>
         </div>
       </div>
