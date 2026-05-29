@@ -30,6 +30,16 @@ const EXERCISE_META = [
   { id: "burpees", icon: "🔥" },
   { id: "planks", icon: "🧘" },
   { id: "running", icon: "🏃" },
+  { id: "dips", icon: "🤸" },
+  { id: "situps", icon: "🙇" },
+  { id: "crunches", icon: "💥" },
+  { id: "lunges", icon: "🦿" },
+  { id: "mountain_climbers", icon: "🧗" },
+  { id: "jumping_jacks", icon: "⭐" },
+  { id: "leg_raises", icon: "🦵" },
+  { id: "wall_sit", icon: "🧱" },
+  { id: "high_knees", icon: "🏅" },
+  { id: "bicycle_crunches", icon: "🚴" },
 ]
 
 const FEATURE_META = [
