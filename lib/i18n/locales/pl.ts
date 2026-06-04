@@ -148,6 +148,23 @@ export const pl = {
     fallbackError: "Failed to load data",
     retry: "Try again",
   },
+  camera: {
+    title: "Licz kamerą",
+    description: "Ustaw się w kadrze, a wykrywanie pozy policzy Twoje powtórzenia.",
+    reps: "powt.",
+    start: "Włącz kamerę",
+    starting: "Uruchamianie…",
+    stop: "Zatrzymaj",
+    reset: "Resetuj",
+    loadingModel: "Ładowanie modelu pozy…",
+    prompt: "Włącz kamerę, aby liczyć powtórzenia",
+    log: "Zapisz",
+    permissionDenied: "Brak dostępu do kamery. Zezwól na dostęp i spróbuj ponownie.",
+    startError: "Nie udało się uruchomić kamery. Spróbuj ponownie.",
+    hintUpperBody: "Upewnij się, że górna część ciała jest w kadrze",
+    hintMove: "Zacznij się ruszać — schodź w dół i wracaj do góry",
+    hintNoPerson: "Nie wykryto osoby",
+  },
   featuresPage: {
     badge: "Everything you get",
     title: {

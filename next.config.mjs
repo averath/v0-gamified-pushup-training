@@ -9,6 +9,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  turbopack: {
+    resolveAlias: {
+      // pose-detection statically imports BlazePose's @mediapipe/pose runtime,
+      // which has no ESM exports and breaks bundling. We only use MoveNet, so
+      // alias it to a stub. See lib/mediapipe-pose-stub.js.
+      "@mediapipe/pose": "./lib/mediapipe-pose-stub.js",
+    },
+  },
   async headers() {
     const ONE_WEEK = 60 * 60 * 24 * 7 // 604800 seconds
 

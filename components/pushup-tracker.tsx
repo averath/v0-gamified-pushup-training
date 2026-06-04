@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus, BarChart3, Volume2, VolumeX, Flame } from "lucide-react"
+import { Target, TrendingUp, Zap, LogOut, Trophy, User, Edit, Plus, BarChart3, Volume2, VolumeX, Flame, Camera } from "lucide-react"
 import { LevelBadge } from "@/components/level-badge"
 import { ProgressBar } from "@/components/progress-bar"
 import { AddWorkoutDialog } from "@/components/add-workout-dialog"
+import { CameraRepCounter } from "@/components/camera-rep-counter"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { LevelUpCelebration } from "@/components/level-up-celebration"
 import { WorkoutHistory } from "@/components/workout-history"
 import { StatsCard } from "@/components/stats-card"
@@ -76,6 +78,7 @@ export function PushupTracker({
   const [currentUsername, setCurrentUsername] = useState(username)
   const [showEditUsername, setShowEditUsername] = useState(false)
   const [showAddWorkout, setShowAddWorkout] = useState(false)
+  const [showCameraCounter, setShowCameraCounter] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -432,10 +435,22 @@ export function PushupTracker({
                 <span className="text-lg font-bold text-foreground">{currentTotal.toLocaleString()}</span>
               </div>
 
-              <Button size="lg" className="mt-4 gap-2" onClick={() => setShowAddWorkout(true)} disabled={isLoading}>
-                <Plus className="h-5 w-5" />
-                Log Workout
-              </Button>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+                <Button size="lg" className="gap-2" onClick={() => setShowAddWorkout(true)} disabled={isLoading}>
+                  <Plus className="h-5 w-5" />
+                  Log Workout
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 bg-transparent"
+                  onClick={() => setShowCameraCounter(true)}
+                  disabled={isLoading}
+                >
+                  <Camera className="h-5 w-5" />
+                  {t.camera.title}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -492,6 +507,25 @@ export function PushupTracker({
         exerciseTypes={exerciseTypes}
         defaultExerciseType={activeExercise}
       />
+
+      <Dialog open={showCameraCounter} onOpenChange={setShowCameraCounter}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">{t.camera.title}</DialogTitle>
+            <DialogDescription>{t.camera.description}</DialogDescription>
+          </DialogHeader>
+          <CameraRepCounter
+            exerciseName={getExerciseName(activeExercise)}
+            disabled={isLoading}
+            onLogReps={(count) => {
+              if (count > 0) {
+                handleAddPushups(count, activeExercise)
+                setShowCameraCounter(false)
+              }
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       <LevelUpCelebration
         newLevel={newLevel}

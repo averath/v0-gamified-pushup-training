@@ -147,6 +147,23 @@ export const en = {
     fallbackError: "Failed to load data",
     retry: "Try again",
   },
+  camera: {
+    title: "Count with Camera",
+    description: "Position yourself in frame and let pose detection count your reps.",
+    reps: "reps",
+    start: "Start camera",
+    starting: "Starting…",
+    stop: "Stop",
+    reset: "Reset",
+    loadingModel: "Loading pose model…",
+    prompt: "Start the camera to count reps",
+    log: "Log",
+    permissionDenied: "Camera permission denied. Allow camera access and try again.",
+    startError: "Could not start the camera. Please try again.",
+    hintUpperBody: "Make sure your upper body is in frame",
+    hintMove: "Start moving — go all the way down and up",
+    hintNoPerson: "No person detected",
+  },
   featuresPage: {
     badge: "Everything you get",
     title: {
